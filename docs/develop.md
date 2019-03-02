@@ -4,7 +4,7 @@
 
 开发时注意参考参数格式说明：[params.md](./params.md)
 
-## 二、Kernal 结构介绍
+## 二、结构介绍
 
 `kernal`的核心函数是：`one_epoch`，表示运行一个周期，一个周期里会调用：`move_car`，`move_bullet`，同时会更新视野信息，比赛信息等，并更新游戏画面（如果显示画面）
 
