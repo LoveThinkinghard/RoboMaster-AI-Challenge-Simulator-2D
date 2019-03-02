@@ -4,6 +4,8 @@ RoboMaster AI Challenge Simulator 2D，简称`RMAICS`，是为参加 [ICRA 2019 
 
 ![demo](./demo.gif)
 
+游戏帧率在200fps左右，但制作gif的帧率仅为60fps
+
 ## 一、依赖
 
 numpy
