@@ -580,12 +580,6 @@ class kernal(object):
         self.acts[n, 5] = self.orders[n, 6]
         self.acts[n, 7] = self.orders[n, 7]
 
-    def reset_act(self, n):
-        self.acts[n, 4] = 0
-        self.acts[n, 5] = 0
-        self.acts[n, 6] = 0
-        self.acts[n, 7] = 0
-
     def set_car_loc(self, n, loc):
         self.cars[n, 1:3] = loc
 
