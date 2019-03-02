@@ -9,12 +9,12 @@
 |[state](#state)||总状态|
 |[agents](#agents)|[cars](#agents)|车的状态|
 |[compet](#compet)|[compet_info](#compet)|比赛信息|
-|[detect](#detect&vision)|[detect](#detect&vision)|能检测到的车|
-|[vision](#detect&vision)|[vision](#detect&vision)|能看到到的车|
+|[detect](#detect)|[detect](#detect)|激光雷达能检测到的车|
+|[vision](#vision)|[vision](#vision)|摄像头能看到的车|
 |[actions](#actions)|[orders](#actions)|控制车的指令|
 |[g_map](#g_map)|[g_map](#g_map)|地图信息|
-|[areas](#areas&barriers)|[areas](#areas&barriers)|区域信息|
-|[barriers](#areas&barriers)|[barriers](#areas&barriers)|障碍物信息|
+|[areas](#areas)|[areas](#areas)|区域信息|
+|[barriers](#barriers)|[barriers](#barriers)|障碍物信息|
 
 ## state
 
@@ -84,6 +84,10 @@ class state(object):
 |1|3|bonus_time|0~6000|加成剩余时间|蓝方|
 
 ## detect&vision
+
+### detect
+
+### vision
 
 `detect`指激光雷达能看到的车，`vision`指摄像头能看到的车，两者均用二维数组表示，`shape`为：（car_num, car_num），比如
 
