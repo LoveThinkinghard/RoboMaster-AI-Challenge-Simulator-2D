@@ -2,7 +2,7 @@
 
 ## 开发须知
 
-开发时注意参考参数格式说明：[params.md](./docs/params.md)
+开发时注意参考参数格式说明：[params.md](./params.md)
 
 ## 可以改进的地方
 
