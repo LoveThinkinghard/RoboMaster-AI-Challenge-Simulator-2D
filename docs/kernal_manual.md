@@ -48,3 +48,13 @@ h. 当车的中心点在防御加成区的方形区域内时，会进行防御�
         self.lidar_angle = 120 / 2 # 激光雷达的视野视野范围
         self.move_discount = 0.6 # 撞墙之后反弹的强度大小
 ```
+
+## 三、小功能
+
+### 1、调用地图信息
+
+`kernal.get_map()`，返回`g_map`，参数格式见：[params.md](./params.md/#g_map)
+
+### 2、设置车的坐标
+
+`kernal.set_car_loc(n, loc)`，`n`为车的编号，0~3，`loc`为车的坐标，二维数组，无返回
