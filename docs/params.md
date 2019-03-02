@@ -35,11 +35,11 @@ class state(object):
 |名称|类型|范围|解释|
 |---|---|---|---|
 |time|int|0~180|比赛剩余时间|
-|agents|float|array|车的状态|
-|compet|int|array|比赛信息|
+|[agents](#agents)|float|array|车的状态|
+|[compet](#compet)|int|array|比赛信息|
 |done|bool|0~1|比赛是否结束|
-|detect|int|array|能检测到哪些车|
-|vision|int|array|能看到那些车|
+|[detect](#detect)|int|array|能检测到哪些车|
+|[vision](#vision)|int|array|能看到那些车|
 
 ## agents
 
@@ -146,8 +146,8 @@ class g_map(object):
 |---|---|---|---|
 |length|int|800|地图长度|
 |width|int|500|地图宽度|
-|areas|float|array|补给，起始和加成区域的位置信息|
-|barriers|float|array|障碍物的位置信息|
+|[areas](#areas)|float|array|补给，起始和加成区域的位置信息|
+|[barriers](#barriers)|float|array|障碍物的位置信息|
 
 ## areas&barriers
 
