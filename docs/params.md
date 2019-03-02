@@ -15,6 +15,7 @@
 |[g_map](#g_map)|[g_map](#g_map)|地图信息|
 |[areas](#areas)|[areas](#areas)|区域信息|
 |[barriers](#barriers)|[barriers](#barriers)|障碍物信息|
+||[acts](#acts)|更底层的动作|
 
 ## state
 
@@ -124,7 +125,7 @@ detect = [[0, 1, 0, 0], # 0
 |6|shoot_mode|0~1|射击模式，0：单发，1：连发|r|
 |7|auto_aim|0~1|是否启用自瞄，0：否，1：是|n|
 
-[3] 会不断加速，x最大速度3m/s，y最大速度2m/s
+[3] 会不断加速，x最大速度3m/s，y最大速度2m/s，实际上可以把这些按键理解为油门，控制是否加速
 
 `串行多玩家模式`：可通过按键盘上方的数字改变操作对象，具体请参考[operation.md](./operation.md)
 
@@ -189,3 +190,18 @@ class g_map(object):
 |4|垂直|
 |5|垂直|
 |6|垂直|
+
+## acts
+
+这个`acts`是`kernal`里的动作，与`rmaics`里的[`actions`](#actions)不同，本`acts`是一个较底层的action，类型`float`，`shape`为：（car_num，8）
+
+|引索1|名称|解释|
+|-|-|-|
+|0|rotate_speed|底盘旋转速度|
+|1|yaw_speed|云台旋转速度|
+|2|x_speed|前进后退速度|
+|3|y_speed|左右平移速度|
+|4|shoot|是否发射|
+|5|shoot_mutiple|是否连发|
+|6|supply|是否触发补给|
+|7|auto_aim|是否自动瞄准|
