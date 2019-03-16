@@ -38,3 +38,7 @@ numpy
 参数格式说明：[params.md](./docs/params.md)
 
 `kernal`开发指南：[develop.md](./docs/develop.md)
+
+### 3、其他
+
+`kernal`为`kernel`的错误写法，有时间改过来
