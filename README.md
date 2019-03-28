@@ -42,3 +42,5 @@ numpy
 ### 3、其他
 
 `kernal`为`kernel`的错误写法，有时间改过来
+
+参赛队伍：MSE iRobot（华中科技大学 HUST）
