@@ -1,8 +1,9 @@
 # RMAICS Manual
 
-## 一、设计观测值与奖励函数
+## 1. Design observations and reward functions
 
-首先根据自己的需要完成封装类`rmaics`中的`get_observation`和`get_reward`部分，即下面两部分
+First complete the `get_observation` and `get_reward` 
+parts in the package class `rmaics` according to your needs, namely the following two parts
 
 ```python
     def get_observation(self, state):
@@ -15,20 +16,22 @@
         return rewards
 ```
 
-如需使用地图信息，可调用`kernal`的`get_map`函数，将会返回地图信息，返回数据的格式见[params.md](./params.md)。例如
+If you need to use map information, you can call the `get_map` function of `kernal`,
+and the map information will be returned. For the format of the returned data, see [params.md]
 
 ```python
 game = kernal(car_num=1, render=True)
 g_map = game.get_map()
 ```
 
-## 二、开始使用
+## Two, start using
 
-`rmaics`的使用方式与[openai](https://openai.com/)的[gym](https://github.com/openai/gym)类似
+The usage of `rmaics` is similar to [gym](https://github.com/openai/gym) of [openai](https://openai.com/)
 
-### 1、初始化
+### 1. Initialization
 
-导入，声明并初始化，`render`为`True`时显示会画面，并可以使用键盘操作，反之不行
+Import, declare and initialize. When `render` is `True`,
+the screen will be displayed, and keyboard operations can be used, but not vice versa
 
 ```python
 from rmaics import rmaics
@@ -37,9 +40,10 @@ game = rmaics(agent_num=car_num, render=True)
 game.reset()
 ```
 
-### 2、执行一步
+### 2. Perform one step
 
-传入决策，得到观测，奖励，是否结束，和其他信息，参数的具体格式请参考：[params.md](./params.md)
+Incoming decision, get observations, rewards, whether to end, and other information,
+please refer to the specific format of the parameters: [params.md](./params.md)
 
 ```python
 # action format (int, np.array): [['x', 'y', 'rotate', 'yaw', 'shoot', 'supply', 'shoot_mode', 'auto_aim'], ...]
@@ -48,17 +52,21 @@ actions = [[1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1
 obs, reward, done, _ = game.step(actions)
 ```
 
-### 3、使用键盘控制
+### 3. Use keyboard control
 
-如手动用键盘控制，则调用下面这个函数，注意：只有`render`为`True`时才可以调用，用鼠标点击窗口的关闭图标可以正常停止游戏
+If you use the keyboard to control manually, call the following function. Note: It can be called only 
+when `render` is `True`. Click the close icon of the window with the mouse to stop the game normally
 
 ```python
 game.play()
 ```
 
-### 4、保存记忆
+### 4. Save memory
 
-这里的记忆指的是`kernal`的记忆，记忆将被保存为[npy](https://stackoverflow.com/questions/4090080/what-is-the-way-data-is-stored-in-npy)文件，里面存储着用来复现游戏的所需信息，如何播放请参考[record_player](./record_player.md)，保存方式如下
+The memory here refers to the memory of `kernal`, the memory will be saved as 
+[npy](https://stackoverflow.com/questions/4090080/what-is-the-way-data-is-stored-in-npy ) File, which 
+stores the information needed to reproduce the game. For how to play, 
+please refer to [record_player](./record_player.md), save as follows
 
 ```python
 game.save_record(file='./records/record.npy')
