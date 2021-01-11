@@ -3,6 +3,8 @@
 kernal v1.0
 '''
 import numpy as np
+import gym
+# from gym.utils import seeding, EzPickle
 
 class bullet(object):
     def __init__(self, center, angle, speed, owner):
@@ -36,14 +38,14 @@ class g_map(object):
         self.areas = areas
         self.barriers = barriers
 
-class record_player(object):
+class record_player(object): # 复现之前的游戏
     def __init__(self):
         self.map_length = 800
         self.map_width = 500
         global pygame
         import pygame
         pygame.init()
-        self.screen = pygame.display.set_mode((self.map_length, self.map_width))
+        self.screen = pygame.display.set_mode((self.map_length, self.map_width)) # creates window
         pygame.display.set_caption('RM AI Challenge Simulator')
         self.gray = (180, 180, 180)
         self.red = (190, 20, 20)
@@ -124,7 +126,7 @@ class record_player(object):
             self.clock.tick(200)
 
     def one_epoch(self):
-        self.screen.fill(self.gray)
+        self.screen.fill(self.gray) # fill it with grey
         for i in range(len(self.barriers_rect)):
             self.screen.blit(self.barriers_img[i], self.barriers_rect[i])
         for i in range(len(self.areas_rect)):
@@ -195,8 +197,9 @@ class record_player(object):
              [-6.5, 30], [6.5, 30]])
         return [np.matmul(x, rotate_matrix) + car[1:3] for x in xs]
 
-class kernal(object):
-    def __init__(self, car_num, render=False, record=True):
+class kernal(gym.Env):
+    def __init__(self, car_num, render=False, record=True):# map, car, render
+        
         self.car_num = car_num
         self.render = render
         # below are params that can be challenged depended on situation
@@ -227,6 +230,10 @@ class kernal(object):
                                   [635.0, 660.0, 140.0, 240.0],
                                   [325.0, 350.0, 400.0, 500.0],
                                   [450.0, 475.0, 0.0, 100.0]], dtype='float32')
+
+        self.prev_reward = None
+
+
         if render:
             global pygame
             import pygame
@@ -266,9 +273,13 @@ class kernal(object):
             pygame.font.init()
             self.font = pygame.font.SysFont('info', 20)
             self.clock = pygame.time.Clock()
-
-    def reset(self):
-        self.time = 180
+    '''
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+    '''
+    def reset(self): # state(self.time, self.cars, self.compet_info, self.time <= 0)
+        self.time = 180 
         self.orders = np.zeros((4, 8), dtype='int8')
         self.acts = np.zeros((self.car_num, 8),dtype='float32')
         self.obs = np.zeros((self.car_num, 17), dtype='float32')
@@ -276,7 +287,7 @@ class kernal(object):
         self.vision = np.zeros((self.car_num, self.car_num), dtype='int8')
         self.detect = np.zeros((self.car_num, self.car_num), dtype='int8')
         self.bullets = []
-        self.epoch = 0
+        self.epoch = 0 
         self.n = 0
         self.dev = False
         self.memory = []
@@ -285,24 +296,37 @@ class kernal(object):
                          [1, 750, 50, 0, 0, 0, 2000, 0, 0, 1, 0, 0, 0, 0, 0],
                          [0, 750, 450, 0, 0, 0, 2000, 0, 0, 1, 0, 0, 0, 0, 0]], dtype='float32')
         self.cars = cars[0:self.car_num]
+        prev_reward = None
         return state(self.time, self.cars, self.compet_info, self.time <= 0)
 
-    def play(self):
+    def play(self): # get order, one_epoch
         # human play mode, only when render == True
         assert self.render, 'human play mode, only when render == True'
-        while True:
-            if not self.epoch % 10:
-                if self.get_order():
-                    break
-            self.one_epoch()
-
+        if not self.epoch % 10:
+            if self.get_order(): # if event.type == pygame.QUIT 
+                break
+        self.one_epoch()
+        return state(self.time, self.cars, self.compet_info, self.time <= 0, self.detect, self.vision)
+  
     def step(self, orders):
         self.orders[0:self.car_num] = orders
         self.orders = orders
         for _ in range(10):
             self.one_epoch()
         return state(self.time, self.cars, self.compet_info, self.time <= 0, self.detect, self.vision)
-
+ 
+    def eachstep(self):
+        reward = 0
+        state = play()
+        shaping = # related to cars       
+        reward = shaping -self.prev_reward
+        self.prev_reward = reward 
+        done = self.state[3]
+        if done:
+            #reward...
+        
+        return state, reward, done, {}
+ 
     def one_epoch(self):
         for n in range(self.car_num):
             if not self.epoch % 10:
@@ -310,7 +334,7 @@ class kernal(object):
             # move car one by one
             self.move_car(n)
             if not self.epoch % 20:
-                if self.cars[n, 5] >= 720:
+                if self.cars[n, 5] >= 720: # 5:枪口热量 6:血量
                     self.cars[n, 6] -= (self.cars[n, 5] - 720) * 40
                     self.cars[n, 5] = 720
                 elif self.cars[n, 5] > 360:
@@ -318,8 +342,8 @@ class kernal(object):
                 self.cars[n, 5] -= 12 if self.cars[n, 6] >= 400 else 24
             if self.cars[n, 5] <= 0: self.cars[n, 5] = 0
             if self.cars[n, 6] <= 0: self.cars[n, 6] = 0
-            if not self.acts[n, 5]: self.acts[n, 4] = 0
-        if not self.epoch % 200:
+            if not self.acts[n, 5]: self.acts[n, 4] = 0 # 5:连发 6:单发
+        if not self.epoch % 200: # 200epoch = 1s
                 self.time -= 1
                 if not self.time % 60:
                     self.compet_info[:, 0:3] = [2, 1, 0]
@@ -601,7 +625,7 @@ class kernal(object):
             if self.compet_info[i, 3] > 0:
                 self.compet_info[i, 3] -= 1
 
-    def cross(self, p1, p2, p3):
+    def cross(self, p1, p2, p3): # 叉乘
         # this part code came from: https://www.jianshu.com/p/a5e73dbc742a
         x1 = p2[0] - p1[0]
         y1 = p2[1] - p1[1]
@@ -609,7 +633,7 @@ class kernal(object):
         y2 = p3[1] - p1[1]
         return x1 * y2 - x2 * y1 
 
-    def segment(self, p1, p2, p3, p4):
+    def segment(self, p1, p2, p3, p4): # 判断p1, p2两线和p3, p4 两线是否交叉
         # this part code came from: https://www.jianshu.com/p/a5e73dbc742a
         if (max(p1[0], p2[0])>=min(p3[0], p4[0]) and max(p3[0], p4[0])>=min(p1[0], p2[0])
         and max(p1[1], p2[1])>=min(p3[1], p4[1]) and max(p3[1], p4[1])>=min(p1[1], p2[1])):
@@ -641,7 +665,7 @@ class kernal(object):
             if self.segment(l1, l2, p1, p2) or self.segment(l1, l2, p3, p4): return True
         return False
 
-    def get_lidar_vision(self):
+    def get_lidar_vision(self): 
         for n in range(self.car_num):
             for i in range(self.car_num-1):
                 x, y = self.cars[n-i-1, 1:3] - self.cars[n, 1:3]
@@ -658,7 +682,7 @@ class kernal(object):
                     else: self.detect[n, n-i-1] = 1
                 else: self.detect[n, n-i-1] = 0
 
-    def get_camera_vision(self):
+    def get_camera_vision(self): # map 点云
         for n in range(self.car_num):
             for i in range(self.car_num-1):
                 x, y = self.cars[n-i-1, 1:3] - self.cars[n, 1:3]
@@ -752,8 +776,25 @@ class kernal(object):
 
     def save_record(self, file):
         np.save(file, self.memory)
-            
-            
+# demo            
+env = kernal()
+def demo(env, render = Flase)
+    state = env.reset()
+    a = self.orders
+    total_reward = 0
+    steps = 0
+    while True:
+        state, reward, done, info = env.eachstep(a)
+        total_reward += reward
+        if steps % 20 = 0 or done:
+            print("step {} total_reward {:+0.2f}".format(steps, total_reward))
+        steps += 1
+        if done:
+            break
+    return total_reward
+
+if __name__ == '__main__':
+    demo(kernal(), render = True)            
 ''' important indexs
 areas_index = [[{'border_x0': 0, 'border_x1': 1,'border_y0': 2,'border_y1': 3}, # 0 bonus red
                 {'border_x0': 0, 'border_x1': 1,'border_y0': 2,'border_y1': 3}, # 1 supply red
