@@ -12,6 +12,7 @@ game.play()
 game.save_record('./records/record0.npy')
 
 #%%
+'''
 player = record_player()
 player.play('./records/record_test.npy')
-
+'''
