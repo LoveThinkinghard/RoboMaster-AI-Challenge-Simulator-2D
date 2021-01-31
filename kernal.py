@@ -213,8 +213,14 @@ class kernal(object):
             self.cars[n, 7] -= 1
             if self.cars[n, 7] == 0:
                 self.cars[n, 8] == 0
+
+        '''
+        # the code below this commented-out code applies (de)buffs to the robots
+        # this commented code is left as reference
+        
         # check supply
         if self.acts[n, 6]:
+            print('here')
             dis = np.abs(self.cars[n, 1:3] - [self.areas[int(self.cars[n, 0]), 1][0:2].mean(), \
                                    self.areas[int(self.cars[n, 0]), 1][2:4].mean()]).sum()
             if dis < 23 and self.compet_info[int(self.cars[n, 0]), 0] and not self.cars[n, 7]:
@@ -222,6 +228,16 @@ class kernal(object):
                 self.cars[n, 7] = 600 # 3 s
                 self.cars[n, 10] += 50
                 self.compet_info[int(self.cars[n, 0]), 0] -= 1
+        '''
+
+        # Check whether the robot n is on top of any zones, and apply the corresponding (de)buff.
+        # It currently checks whether the robot is on its teams zupply zone, the translucent gray rhombuses top
+        # and bottom middle of the field.
+        for i in range(6):      # 6 = number of zones
+            dist = np.abs(self.cars[n, 1:3] - [self.areas[int(self.cars[n, 0]), 1][0:2].mean(),
+                                               self.areas[int(self.cars[n, 0]), 1][2:4].mean()]).sum()
+            if dist < 100:
+                self.cars[n, 12] += 2
 
     def move_bullet(self, n):
         '''
