@@ -40,13 +40,13 @@ h. 当车的中心点在防御加成区的方形区域内时，会进行防御�
 在`kernal`类的`__init__`函数中，有一些可以视场地等环境改变的量，如下
 
 ```python
-        self.bullet_speed = 12.5 # 子弹速度，单位为pixel
-        self.motion = 6 # 移动的惯性感大小
-        self.rotate_motion = 4 # 底盘旋转的惯性感大小
-        self.yaw_motion = 1 # 云台旋转的惯性感大小
-        self.camera_angle = 75 / 2 # 摄像头的视野范围
-        self.lidar_angle = 120 / 2 # 激光雷达的视野视野范围
-        self.move_discount = 0.6 # 撞墙之后反弹的强度大小
+        self.BULLET_SPEED = 12.5 # 子弹速度，单位为pixel
+        self.MOTION = 6 # 移动的惯性感大小
+        self.ROTATE_MOTION = 4 # 底盘旋转的惯性感大小
+        self.YAW_MOTION = 1 # 云台旋转的惯性感大小
+        self.CAMERA_ANGLE = 75 / 2 # 摄像头的视野范围
+        self.LIDAR_ANGLE = 120 / 2 # 激光雷达的视野视野范围
+        self.MOVE_DISCOUNT = 0.6 # 撞墙之后反弹的强度大小
 ```
 
 ## 三、小功能

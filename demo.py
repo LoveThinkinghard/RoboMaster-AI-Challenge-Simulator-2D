@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from rmaics import rmaics
-from kernal import record_player
+from record_player import record_player
 
 #%%
 game = rmaics(agent_num=4, render=True)

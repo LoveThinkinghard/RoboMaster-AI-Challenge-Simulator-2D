@@ -1,217 +1,14 @@
-# -*- coding: utf-8 -*-
-'''
-kernal v1.0
-'''
 import numpy as np
+from objects import *
+from globals import *
 
-class bullet(object):
-    def __init__(self, center, angle, speed, owner):
-        self.center = center.copy()
-        self.speed = speed
-        self.angle = angle
-        self.owner = owner
-
-class state(object):
-    def __init__(self, time, agents, compet_info, done=False, detect=None, vision=None):
-        self.time = time
-        self.agents = agents
-        self.compet = compet_info
-        self.done = done
-        self.detect = detect
-        self.vision = vision
-
-class record(object):
-    def __init__(self, time, cars, compet_info, detect, vision, bullets):
-        self.time = time
-        self.cars = cars
-        self.compet_info = compet_info
-        self.detect = detect
-        self.vision = vision
-        self.bullets = bullets
-
-class g_map(object):
-    def __init__(self, length, width, areas, barriers):
-        self.length = length
-        self.width = width
-        self.areas = areas
-        self.barriers = barriers
-
-class record_player(object):
-    def __init__(self):
-        self.map_length = 808
-        self.map_width = 448
-        global pygame
-        import pygame
-        pygame.init()
-        self.screen = pygame.display.set_mode((self.map_length, self.map_width))
-        pygame.display.set_caption('RM AI Challenge Simulator')
-        self.gray = (180, 180, 180)
-        self.red = (190, 20, 20)
-        self.blue = (10, 125, 181)
-        self.areas = np.array([[[580.0, 680.0, 275.0, 375.0],
-                                [350.0, 450.0, 0.0, 100.0],
-                                [700.0, 800.0, 400.0, 500.0],
-                                [0.0, 100.0, 400.0, 500.0]],
-                               [[120.0, 220.0, 125.0, 225.0],
-                                [350.0, 450.0, 400.0, 500.0],
-                                [0.0, 100.0, 0.0, 100.0],
-                                [700.0, 800.0, 0.0, 100.0]]], dtype='float32')
-        self.barriers = np.array([[350.0, 450.0, 237.5, 262.5],
-                                  [120.0, 220.0, 100.0, 125.0],
-                                  [580.0, 680.0, 375.0, 400.0],
-                                  [140.0, 165.0, 260.0, 360.0],
-                                  [635.0, 660.0, 140.0, 240.0],
-                                  [325.0, 350.0, 400.0, 500.0],
-                                  [450.0, 475.0, 0.0, 100.0]], dtype='float32')
-        # load barriers imgs
-        self.barriers_img = []
-        self.barriers_rect = []
-        for i in range(self.barriers.shape[0]):
-            self.barriers_img.append(pygame.image.load('./imgs/barrier_{}.png'.format('horizontal' if i < 3 else 'vertical')))
-            self.barriers_rect.append(self.barriers_img[-1].get_rect())
-            self.barriers_rect[-1].center = [self.barriers[i][0:2].mean(), self.barriers[i][2:4].mean()]
-        # load areas imgs
-        self.areas_img = []
-        self.areas_rect = []
-        for oi, o in enumerate(['red', 'blue']):
-            for ti, t in enumerate(['bonus', 'supply', 'start', 'start']):
-                self.areas_img.append(pygame.image.load('./imgs/area_{}_{}.png'.format(t, o)))
-                self.areas_rect.append(self.areas_img[-1].get_rect())
-                self.areas_rect[-1].center = [self.areas[oi, ti][0:2].mean(), self.areas[oi, ti][2:4].mean()]
-        # load supply head imgs
-        self.head_img = [pygame.image.load('./imgs/area_head_{}.png'.format(i)) for i in ['red', 'blue']]
-        self.head_rect = [self.head_img[i].get_rect() for i in range(len(self.head_img))]
-        self.head_rect[0].center = [self.areas[0, 1][0:2].mean(), self.areas[0, 1][2:4].mean()]
-        self.head_rect[1].center = [self.areas[1, 1][0:2].mean(), self.areas[1, 1][2:4].mean()]
-        self.chassis_img = pygame.image.load('./imgs/chassis_g.png')
-        self.gimbal_img = pygame.image.load('./imgs/gimbal_g.png')
-        self.bullet_img = pygame.image.load('./imgs/bullet_s.png')
-        self.info_bar_img = pygame.image.load('./imgs/info_bar.png')
-        self.bullet_rect = self.bullet_img.get_rect()
-        self.info_bar_rect = self.info_bar_img.get_rect()
-        self.info_bar_rect.center = [200, self.map_width/2]
-        pygame.font.init()
-        self.font = pygame.font.SysFont('info', 20)
-        self.clock = pygame.time.Clock()
-
-    def play(self, file):
-        self.memory = np.load(file)
-        i = 0
-        stop = False
-        flag = 0
-        while True:
-            self.time = self.memory[i].time
-            self.cars = self.memory[i].cars
-            self.car_num = len(self.cars)
-            self.compet_info = self.memory[i].compet_info
-            self.detect = self.memory[i].detect
-            self.vision = self.memory[i].vision
-            self.bullets = self.memory[i].bullets
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-            pressed = pygame.key.get_pressed()
-            if pressed[pygame.K_TAB]: self.dev = True
-            else: self.dev = False
-            self.one_epoch()
-            if pressed[pygame.K_SPACE] and not flag:
-                flag = 50
-                stop = not stop
-            if flag > 0: flag -= 1
-            if pressed[pygame.K_LEFT] and i > 10: i -= 10
-            if pressed[pygame.K_RIGHT] and i < len(self.memory)-10: i += 10
-            if i < len(self.memory)-1 and not stop: i += 1
-            self.clock.tick(200)
-
-    def one_epoch(self):
-        self.screen.fill(self.gray)
-        for i in range(len(self.barriers_rect)):
-            self.screen.blit(self.barriers_img[i], self.barriers_rect[i])
-        for i in range(len(self.areas_rect)):
-            self.screen.blit(self.areas_img[i], self.areas_rect[i])
-        for i in range(len(self.bullets)):
-            self.bullet_rect.center = self.bullets[i].center
-            self.screen.blit(self.bullet_img, self.bullet_rect)
-        for n in range(self.car_num):
-            chassis_rotate = pygame.transform.rotate(self.chassis_img, -self.cars[n, 3]-90)
-            gimbal_rotate = pygame.transform.rotate(self.gimbal_img, -self.cars[n, 4]-self.cars[n, 3]-90)
-            chassis_rotate_rect = chassis_rotate.get_rect()
-            gimbal_rotate_rect = gimbal_rotate.get_rect()
-            chassis_rotate_rect.center = self.cars[n, 1:3]
-            gimbal_rotate_rect.center = self.cars[n, 1:3]
-            self.screen.blit(chassis_rotate, chassis_rotate_rect)
-            self.screen.blit(gimbal_rotate, gimbal_rotate_rect)
-            select = np.where((self.vision[n] == 1))[0]+1
-            select2 = np.where((self.detect[n] == 1))[0]+1
-            info = self.font.render('{} | {}: {} {}'.format(int(self.cars[n, 6]), n+1, select, select2), True, self.blue if self.cars[n, 0] else self.red)
-            self.screen.blit(info, self.cars[n, 1:3]+[-20, -60])
-            info = self.font.render('{} {}'.format(int(self.cars[n, 10]), int(self.cars[n, 5])), True, self.blue if self.cars[n, 0] else self.red)
-            self.screen.blit(info, self.cars[n, 1:3]+[-20, -45])
-        self.screen.blit(self.head_img[0], self.head_rect[0])
-        self.screen.blit(self.head_img[1], self.head_rect[1])
-        info = self.font.render('time: {}'.format(self.time), False, (0, 0, 0))
-        self.screen.blit(info, (8, 8))
-        if self.dev:
-            for n in range(self.car_num):
-                wheels = self.check_points_wheel(self.cars[n])
-                for w in wheels:
-                    pygame.draw.circle(self.screen, self.blue if self.cars[n, 0] else self.red, w.astype(int), 3)
-                armors = self.check_points_armor(self.cars[n])
-                for a in armors:
-                    pygame.draw.circle(self.screen, self.blue if self.cars[n, 0] else self.red, a.astype(int), 3)
-            self.screen.blit(self.info_bar_img, self.info_bar_rect)
-            for n in range(self.car_num):
-                tags = ['owner', 'x', 'y', 'angle', 'yaw', 'heat', 'hp', 'freeze_time', 'is_supply', 
-                        'can_shoot', 'bullet', 'stay_time', 'wheel_hit', 'armor_hit', 'car_hit']
-                info = self.font.render('car {}'.format(n), False, (0, 0, 0))
-                self.screen.blit(info, (8+n*100, 100))
-                for i in range(self.cars[n].size):
-                    info = self.font.render('{}: {}'.format(tags[i], int(self.cars[n, i])), False, (0, 0, 0))
-                    self.screen.blit(info, (8+n*100, 117+i*17))
-            info = self.font.render('red   supply: {}   bonus: {}   bonus_time: {}'.format(self.compet_info[0, 0], \
-                                    self.compet_info[0, 1], self.compet_info[0, 3]), False, (0, 0, 0))
-            self.screen.blit(info, (8, 372))
-            info = self.font.render('blue   supply: {}   bonus: {}   bonus_time: {}'.format(self.compet_info[1, 0], \
-                                self.compet_info[1, 1], self.compet_info[1, 3]), False, (0, 0, 0))
-            self.screen.blit(info, (8, 389))
-        pygame.display.flip()
-
-    def check_points_wheel(self, car):
-        rotate_matrix = np.array([[np.cos(-np.deg2rad(car[3]+90)), -np.sin(-np.deg2rad(car[3]+90))],
-                                  [np.sin(-np.deg2rad(car[3]+90)), np.cos(-np.deg2rad(car[3]+90))]])
-        xs = np.array([[-22.5, -29], [22.5, -29], 
-                       [-22.5, -14], [22.5, -14], 
-                       [-22.5, 14], [22.5, 14],
-                       [-22.5, 29], [22.5, 29]])
-        return [np.matmul(xs[i], rotate_matrix) + car[1:3] for i in range(xs.shape[0])]
-
-    def check_points_armor(self, car):
-        rotate_matrix = np.array([[np.cos(-np.deg2rad(car[3]+90)), -np.sin(-np.deg2rad(car[3]+90))],
-                                  [np.sin(-np.deg2rad(car[3]+90)), np.cos(-np.deg2rad(car[3]+90))]])
-        xs = np.array([[-6.5, -30], [6.5, -30], 
-             [-18.5,  -7], [18.5,  -7],
-             [-18.5,  0], [18.5,  0],
-             [-18.5,  6], [18.5,  6],
-             [-6.5, 30], [6.5, 30]])
-        return [np.matmul(x, rotate_matrix) + car[1:3] for x in xs]
 
 class kernal(object):
     def __init__(self, car_num, render=False, record=True):
         self.car_num = car_num
         self.render = render
-        # below are params that can be challenged depended on situation
-        self.bullet_speed = 12.5
-        self.motion = 6
-        self.rotate_motion = 4
-        self.yaw_motion = 1
-        self.camera_angle = 75 / 2
-        self.lidar_angle = 120 / 2
-        self.move_discount = 0.6
-        # above are params that can be challenged depended on situation
-        self.map_length = 808
-        self.map_width = 448
-        self.theta = np.rad2deg(np.arctan(45/60))
-        self.record=record
+        self.record = record
+
         self.areas = np.array([[[580.0, 680.0, 275.0, 375.0],
                                 [350.0, 450.0, 0.0, 100.0],
                                 [700.0, 800.0, 400.0, 500.0],
@@ -230,31 +27,28 @@ class kernal(object):
                                 [578.0, 658.0, 214.0, 234.0],
                                 [150.0, 170.0, 0.0, 100.0],
                                 [638.0, 658.0, 348.0, 448.0]], dtype='float32')
+
         if render:
             global pygame
             import pygame
             pygame.init()
-            self.screen = pygame.display.set_mode((self.map_length, self.map_width))
+            self.screen = pygame.display.set_mode(FIELD_DIMENSIONS)
             pygame.display.set_caption('RM AI Challenge Simulator')
-            self.gray = (180, 180, 180)
-            self.red = (190, 20, 20)
-            self.blue = (10, 125, 181)
-            # TODO - load barriers, areas (zones as we call them) from /elements, not /imgs
-            # load barriers imgs
-            self.barriers_img = []
-            self.barriers_rect = []
-            for i in range(self.barriers.shape[0]):
-                self.barriers_img.append(pygame.image.load('./imgs/barrier_{}.png'.format('horizontal' if i < 7 else 'vertical')))
-                self.barriers_rect.append(self.barriers_img[-1].get_rect())
-                self.barriers_rect[-1].center = [self.barriers[i][0:2].mean(), self.barriers[i][2:4].mean()]
+
+            self.barrier_imgs = []
+            self.barrier_rects = []
+            for barrier, image_file in {**LOW_BARRIERS, **HIGH_BARRIERS, **SPAWNS, **ZONES}.items():
+                self.barrier_imgs.append(pygame.image.load(f'./elements/{image_file}.png'))
+                self.barrier_rects.append(pygame.Rect(barrier))
+
             # load areas imgs
             self.areas_img = []
             self.areas_rect = []
-            for oi, o in enumerate(['red', 'blue']):
-                for ti, t in enumerate(['bonus', 'supply', 'start', 'start']):
-                    self.areas_img.append(pygame.image.load('./imgs/area_{}_{}.png'.format(t, o)))
-                    self.areas_rect.append(self.areas_img[-1].get_rect())
-                    self.areas_rect[-1].center = [self.areas[oi, ti][0:2].mean(), self.areas[oi, ti][2:4].mean()]
+            # for oi, o in enumerate(['red', 'blue']):
+            #     for ti, t in enumerate(['bonus', 'supply', 'start', 'start']):
+            #         self.areas_img.append(pygame.image.load('./imgs/area_{}_{}.png'.format(t, o)))
+            #         self.areas_rect.append(self.areas_img[-1].get_rect())
+            #         self.areas_rect[-1].center = [self.areas[oi, ti][0:2].mean(), self.areas[oi, ti][2:4].mean()]
             # load supply head imgs
             self.head_img = [pygame.image.load('./imgs/area_head_{}.png'.format(i)) for i in ['red', 'blue']]
             self.head_rect = [self.head_img[i].get_rect() for i in range(len(self.head_img))]
@@ -266,7 +60,7 @@ class kernal(object):
             self.info_bar_img = pygame.image.load('./imgs/info_bar.png')
             self.bullet_rect = self.bullet_img.get_rect()
             self.info_bar_rect = self.info_bar_img.get_rect()
-            self.info_bar_rect.center = [200, self.map_width/2]
+            self.info_bar_rect.center = [200, FIELD_DIMENSIONS[1]/2]
             pygame.font.init()
             self.font = pygame.font.SysFont('info', 20)
             self.clock = pygame.time.Clock()
@@ -354,7 +148,7 @@ class kernal(object):
                 if self.cars[n, 3] > 180: self.cars[n, 3] -= 360
                 if self.cars[n, 3] < -180: self.cars[n, 3] += 360
                 if self.check_interface(n):
-                    self.acts[n, 0] = -self.acts[n, 0] * self.move_discount
+                    self.acts[n, 0] = -self.acts[n, 0] * MOVE_DISCOUNT
                     self.cars[n, 3] = p
             # move gimbal
             if self.acts[n, 1]:
@@ -372,11 +166,11 @@ class kernal(object):
                             angle = np.angle(x+y*1j, deg=True) - self.cars[i, 3]
                             if angle >= 180: angle -= 360
                             if angle <= -180: angle += 360
-                            if angle >= -self.theta and angle < self.theta:
+                            if angle >= -THETA and angle < THETA:
                                 armor = self.get_armor(self.cars[i], 2)
-                            elif angle >= self.theta and angle < 180-self.theta:
+                            elif angle >= THETA and angle < 180-THETA:
                                 armor = self.get_armor(self.cars[i], 3)
-                            elif angle >= -180+self.theta and angle < -self.theta:
+                            elif angle >= -180+THETA and angle < -THETA:
                                 armor = self.get_armor(self.cars[i], 1)
                             else: armor = self.get_armor(self.cars[i], 0)
                             x, y = armor - self.cars[n, 1:3]
@@ -395,20 +189,20 @@ class kernal(object):
                 p = self.cars[n, 1]
                 self.cars[n, 1] += (self.acts[n, 2]) * np.cos(angle) - (self.acts[n, 3]) * np.sin(angle)
                 if self.check_interface(n):
-                    self.acts[n, 2] = -self.acts[n, 2] * self.move_discount
+                    self.acts[n, 2] = -self.acts[n, 2] * MOVE_DISCOUNT
                     self.cars[n, 1] = p
                 # y
                 p = self.cars[n, 2]
                 self.cars[n, 2] += (self.acts[n, 2]) * np.sin(angle) + (self.acts[n, 3]) * np.cos(angle)
                 if self.check_interface(n):
-                    self.acts[n, 3] = -self.acts[n, 3] * self.move_discount
+                    self.acts[n, 3] = -self.acts[n, 3] * MOVE_DISCOUNT
                     self.cars[n, 2] = p
             # fire or not
             if self.acts[n, 4] and self.cars[n, 10]:
                 if self.cars[n, 9]:
                     self.cars[n, 10] -= 1
-                    self.bullets.append(bullet(self.cars[n, 1:3], self.cars[n, 4]+self.cars[n, 3], self.bullet_speed, n))
-                    self.cars[n, 5] += self.bullet_speed
+                    self.bullets.append(bullet(self.cars[n, 1:3], self.cars[n, 4] + self.cars[n, 3], BULLET_SPEED, n))
+                    self.cars[n, 5] += BULLET_SPEED
                     self.cars[n, 9] = 0
                 else:
                     self.cars[n, 9] = 1
@@ -438,8 +232,8 @@ class kernal(object):
         self.bullets[n].center[0] += self.bullets[n].speed * np.cos(np.deg2rad(self.bullets[n].angle))
         self.bullets[n].center[1] += self.bullets[n].speed * np.sin(np.deg2rad(self.bullets[n].angle))
         # bullet wall check
-        if self.bullets[n].center[0] <= 0 or self.bullets[n].center[0] >= self.map_length \
-            or self.bullets[n].center[1] <= 0 or self.bullets[n].center[1] >= self.map_width: return True
+        if self.bullets[n].center[0] <= 0 or self.bullets[n].center[0] >= FIELD_DIMENSIONS[0] \
+            or self.bullets[n].center[1] <= 0 or self.bullets[n].center[1] >= FIELD_DIMENSIONS[1]: return True
         # bullet barrier check
         for b in self.barriers:
             if self.line_barriers_check(self.bullets[n].center, old_point): return True
@@ -460,9 +254,9 @@ class kernal(object):
 
     def update_display(self):
         assert self.render, 'only render mode need update_display'
-        self.screen.fill(self.gray)
-        for i in range(len(self.barriers_rect)):
-            self.screen.blit(self.barriers_img[i], self.barriers_rect[i])
+        self.screen.fill(GRAY)
+        for i in range(len(self.barrier_rects)):
+            self.screen.blit(self.barrier_imgs[i], self.barrier_rects[i])
         for i in range(len(self.areas_rect)):
             self.screen.blit(self.areas_img[i], self.areas_rect[i]) 
         for i in range(len(self.bullets)):
@@ -482,9 +276,9 @@ class kernal(object):
         for n in range(self.car_num):
             select = np.where((self.vision[n] == 1))[0]+1
             select2 = np.where((self.detect[n] == 1))[0]+1
-            info = self.font.render('{} | {}: {} {}'.format(int(self.cars[n, 6]), n+1, select, select2), True, self.blue if self.cars[n, 0] else self.red)
+            info = self.font.render('{} | {}: {} {}'.format(int(self.cars[n, 6]), n+1, select, select2), True, BLUE if self.cars[n, 0] else RED)
             self.screen.blit(info, self.cars[n, 1:3]+[-20, -60])
-            info = self.font.render('{} {}'.format(int(self.cars[n, 10]), int(self.cars[n, 5])), True, self.blue if self.cars[n, 0] else self.red)
+            info = self.font.render('{} {}'.format(int(self.cars[n, 10]), int(self.cars[n, 5])), True, BLUE if self.cars[n, 0] else RED)
             self.screen.blit(info, self.cars[n, 1:3]+[-20, -45])
         info = self.font.render('time: {}'.format(self.time), False, (0, 0, 0))
         self.screen.blit(info, (8, 8))
@@ -495,10 +289,10 @@ class kernal(object):
         for n in range(self.car_num):
             wheels = self.check_points_wheel(self.cars[n])
             for w in wheels:
-                pygame.draw.circle(self.screen, self.blue if self.cars[n, 0] else self.red, w.astype(int), 3)
+                pygame.draw.circle(self.screen, BLUE if self.cars[n, 0] else RED, w.astype(int), 3)
             armors = self.check_points_armor(self.cars[n])
             for a in armors:
-                pygame.draw.circle(self.screen, self.blue if self.cars[n, 0] else self.red, a.astype(int), 3)
+                pygame.draw.circle(self.screen, BLUE if self.cars[n, 0] else RED, a.astype(int), 3)
         self.screen.blit(self.info_bar_img, self.info_bar_rect)
         for n in range(self.car_num):
             tags = ['owner', 'x', 'y', 'angle', 'yaw', 'heat', 'hp', 'freeze_time', 'is_supply', 
@@ -548,35 +342,35 @@ class kernal(object):
 
     def orders_to_acts(self, n):
         # turn orders to acts
-        self.acts[n, 2] += self.orders[n, 0] * 1.5 / self.motion
+        self.acts[n, 2] += self.orders[n, 0] * 1.5 / MOTION
         if self.orders[n, 0] == 0:
-            if self.acts[n, 2] > 0: self.acts[n, 2] -= 1.5 / self.motion
-            if self.acts[n, 2] < 0: self.acts[n, 2] += 1.5 / self.motion
-        if abs(self.acts[n, 2]) < 1.5 / self.motion: self.acts[n, 2] = 0
+            if self.acts[n, 2] > 0: self.acts[n, 2] -= 1.5 / MOTION
+            if self.acts[n, 2] < 0: self.acts[n, 2] += 1.5 / MOTION
+        if abs(self.acts[n, 2]) < 1.5 / MOTION: self.acts[n, 2] = 0
         if self.acts[n, 2] >= 1.5: self.acts[n, 2] = 1.5
         if self.acts[n, 2] <= -1.5: self.acts[n, 2] = -1.5
         # x, y
-        self.acts[n, 3] += self.orders[n, 1] * 1 / self.motion
+        self.acts[n, 3] += self.orders[n, 1] * 1 / MOTION
         if self.orders[n, 1] == 0:
-            if self.acts[n, 3] > 0: self.acts[n, 3] -= 1 / self.motion
-            if self.acts[n, 3] < 0: self.acts[n, 3] += 1 / self.motion
-        if abs(self.acts[n, 3]) < 1 / self.motion: self.acts[n, 3] = 0
+            if self.acts[n, 3] > 0: self.acts[n, 3] -= 1 / MOTION
+            if self.acts[n, 3] < 0: self.acts[n, 3] += 1 / MOTION
+        if abs(self.acts[n, 3]) < 1 / MOTION: self.acts[n, 3] = 0
         if self.acts[n, 3] >= 1: self.acts[n, 3] = 1
         if self.acts[n, 3] <= -1: self.acts[n, 3] = -1
         # rotate chassis
-        self.acts[n, 0] += self.orders[n, 2] * 1 / self.rotate_motion
+        self.acts[n, 0] += self.orders[n, 2] * 1 / ROTATE_MOTION
         if self.orders[n, 2] == 0:
-            if self.acts[n, 0] > 0: self.acts[n, 0] -= 1 / self.rotate_motion
-            if self.acts[n, 0] < 0: self.acts[n, 0] += 1 / self.rotate_motion
-        if abs(self.acts[n, 0]) < 1 / self.rotate_motion: self.acts[n, 0] = 0
+            if self.acts[n, 0] > 0: self.acts[n, 0] -= 1 / ROTATE_MOTION
+            if self.acts[n, 0] < 0: self.acts[n, 0] += 1 / ROTATE_MOTION
+        if abs(self.acts[n, 0]) < 1 / ROTATE_MOTION: self.acts[n, 0] = 0
         if self.acts[n, 0] > 1: self.acts[n, 0] = 1
         if self.acts[n, 0] < -1: self.acts[n, 0] = -1
         # rotate yaw
-        self.acts[n, 1] += self.orders[n, 3] / self.yaw_motion
+        self.acts[n, 1] += self.orders[n, 3] / YAW_MOTION
         if self.orders[n, 3] == 0:
-            if self.acts[n, 1] > 0: self.acts[n, 1] -= 1 / self.yaw_motion
-            if self.acts[n, 1] < 0: self.acts[n, 1] += 1 / self.yaw_motion
-        if abs(self.acts[n, 1]) < 1 / self.yaw_motion: self.acts[n, 1] = 0
+            if self.acts[n, 1] > 0: self.acts[n, 1] -= 1 / YAW_MOTION
+            if self.acts[n, 1] < 0: self.acts[n, 1] += 1 / YAW_MOTION
+        if abs(self.acts[n, 1]) < 1 / YAW_MOTION: self.acts[n, 1] = 0
         if self.acts[n, 1] > 3: self.acts[n, 1] = 3
         if self.acts[n, 1] < -3: self.acts[n, 1] = -3
         self.acts[n, 4] = self.orders[n, 4]
@@ -588,7 +382,7 @@ class kernal(object):
         self.cars[n, 1:3] = loc
 
     def get_map(self):
-        return g_map(self.map_length, self.map_width, self.areas, self.barriers)
+        return g_map(*FIELD_DIMENSIONS, self.areas, self.barriers)
 
     def stay_check(self):
         # check bonus stay
@@ -605,19 +399,11 @@ class kernal(object):
             if self.compet_info[i, 3] > 0:
                 self.compet_info[i, 3] -= 1
 
-    def cross(self, p1, p2, p3):
-        # this part code came from: https://www.jianshu.com/p/a5e73dbc742a
-        x1 = p2[0] - p1[0]
-        y1 = p2[1] - p1[1]
-        x2 = p3[0] - p1[0]
-        y2 = p3[1] - p1[1]
-        return x1 * y2 - x2 * y1 
-
     def segment(self, p1, p2, p3, p4):
         # this part code came from: https://www.jianshu.com/p/a5e73dbc742a
         if (max(p1[0], p2[0])>=min(p3[0], p4[0]) and max(p3[0], p4[0])>=min(p1[0], p2[0])
         and max(p1[1], p2[1])>=min(p3[1], p4[1]) and max(p3[1], p4[1])>=min(p1[1], p2[1])):
-            if (self.cross(p1,p2,p3)*self.cross(p1,p2,p4)<=0 and self.cross(p3,p4,p1)*self.cross(p3,p4,p2)<=0): return True
+            if (cross(p1,p2,p3)*cross(p1,p2,p4)<=0 and cross(p3,p4,p1)*cross(p3,p4,p2)<=0): return True
             else: return False
         else: return False
 
@@ -655,7 +441,7 @@ class kernal(object):
                 angle = angle - self.cars[n, 3]
                 if angle >= 180: angle -= 360
                 if angle <= -180: angle += 360
-                if abs(angle) < self.lidar_angle:
+                if abs(angle) < LIDAR_ANGLE:
                     if self.line_barriers_check(self.cars[n, 1:3], self.cars[n-i-1, 1:3]) \
                     or self.line_cars_check(self.cars[n, 1:3], self.cars[n-i-1, 1:3]):
                         self.detect[n, n-i-1] = 0
@@ -672,7 +458,7 @@ class kernal(object):
                 angle = angle - self.cars[n, 4] - self.cars[n, 3]
                 if angle >= 180: angle -= 360
                 if angle <= -180: angle += 360
-                if abs(angle) < self.camera_angle:
+                if abs(angle) < CAMERA_ANGLE:
                     if self.line_barriers_check(self.cars[n, 1:3], self.cars[n-i-1, 1:3]) \
                     or self.line_cars_check(self.cars[n, 1:3], self.cars[n-i-1, 1:3]):
                         self.vision[n, n-i-1] = 0
@@ -714,7 +500,7 @@ class kernal(object):
         # car barriers assess
         wheels = self.check_points_wheel(self.cars[n])
         for w in wheels:
-            if w[0] <= 0 or w[0] >= self.map_length or w[1] <= 0 or w[1] >= self.map_width:
+            if w[0] <= 0 or w[0] >= FIELD_DIMENSIONS[0] or w[1] <= 0 or w[1] >= FIELD_DIMENSIONS[1]:
                 self.cars[n, 12] += 1
                 return True
             for b in self.barriers:
@@ -723,7 +509,7 @@ class kernal(object):
                     return True
         armors = self.check_points_armor(self.cars[n])
         for a in armors:
-            if a[0] <= 0 or a[0] >= self.map_length or a[1] <= 0 or a[1] >= self.map_width:
+            if a[0] <= 0 or a[0] >= FIELD_DIMENSIONS[0] or a[1] <= 0 or a[1] >= FIELD_DIMENSIONS[1]:
                 self.cars[n, 13] += 1
                 self.cars[n, 6] -= 10
                 return True
@@ -756,7 +542,7 @@ class kernal(object):
 
     def save_record(self, file):
         np.save(file, self.memory)
-            
+
             
 ''' important indexs
 areas_index = [[{'border_x0': 0, 'border_x1': 1,'border_y0': 2,'border_y1': 3}, # 0 bonus red
