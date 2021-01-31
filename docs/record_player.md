@@ -1,12 +1,12 @@
 # Record Player Manual
 
-`Record Player` can be used to reproduce previous games
+The `RecordPlayer` class in `kernel.py` can be used to reproduce previous games
 
-## One, save game memory
+## Saving game memory
 
 ```python
-from rmaics import rmaics
-game = rmaics(agent_num=4, render=True)
+from rmaics import Rmaics
+game = Rmaics(agent_num=4, render=True)
 game.reset()
 # only when render = True
 game.play()
@@ -17,11 +17,11 @@ game.save_record('./records/record0.npy')
 Note: Use the mouse to click the close icon of the game window, the red `×` in the upper
 right corner under `Windows`, the game can be ended normally, and the game memory in the memory will not be cleared
 
-## Second, reproduce the game
+## Loading and replaying the memory
 
 ```python
-from kernal import record_player
-player = record_player()
+from kernel import RecordPlayer
+player = RecordPlayer()
 player.play('./records/record0.npy')
 ```
 

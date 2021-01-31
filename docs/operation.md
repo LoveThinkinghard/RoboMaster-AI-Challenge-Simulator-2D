@@ -1,13 +1,13 @@
 # Control instruction description
 
-## Robot action instructions
+## Robot controls
 
-A single instruction is a one-dimensional array, the type is: `int`, as follows
+The actions that a robot can perform are determined by an 8-element `int` array
 
-|Citation|Name|Scope|Explanation|Hand control buttons|
+|Index|Name|Scope|Explanation|Manual control buttons|
 |-|-|-|-|-|
-|0|x|-1~1|-1: back, 0: not moving, 1: forward |s/w|
-|1|y|-1~1|-1: move left, 0: do not move, 1: move right |q/e|
+|0|x|-1~1|X axis direction, -1: down, 0: not moving, 1: forward |s/w|
+|1|y|-1~1|Y axis direction -1: left, 0: not moving, 1: right |q/e|
 |2|rotate|-1~1|Chassis, -1: turn left, 0: do not move, 1: turn right|a/d|
 |3|yaw|-1~1|Yaw, -1: turn left, 0: do not move, 1: turn right|b/m|
 |4|shoot|0~1|Whether to shoot, 0: No, 1: Yes |space|
@@ -15,7 +15,7 @@ A single instruction is a one-dimensional array, the type is: `int`, as follows
 |6|shoot_mode|0~1|Shooting mode, 0: single shot, 1: continuous shot|r|
 |7|auto_aim|0~1|Whether to enable self-aim, 0: No, 1: Yes|n|
 
-## Assist button
+## Additional Manual Play buttons
 
 |Button|Explanation|Example|
 |-|-|-|

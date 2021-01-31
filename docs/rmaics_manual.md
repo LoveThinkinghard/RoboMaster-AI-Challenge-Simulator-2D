@@ -1,6 +1,6 @@
-# RMAICS Manual
+# rmaics.py Manual
 
-## 1. Design observations and reward functions
+## 1. Functions for training neural networks
 
 First complete the `get_observation` and `get_reward` 
 parts in the package class `rmaics` according to your needs, namely the following two parts
@@ -16,15 +16,15 @@ parts in the package class `rmaics` according to your needs, namely the followin
         return rewards
 ```
 
-If you need to use map information, you can call the `get_map` function of `kernal`,
+If you need to use map information, you can call the `get_map` function from `kernel.py`,
 and the map information will be returned. For the format of the returned data, see [params.md]
 
 ```python
-game = kernal(car_num=1, render=True)
+game = Kernel(car_num=1, render=True)
 g_map = game.get_map()
 ```
 
-## Two, start using
+## 2. Running and testing
 
 The usage of `rmaics` is similar to [gym](https://github.com/openai/gym) of [openai](https://openai.com/)
 
@@ -34,16 +34,18 @@ Import, declare and initialize. When `render` is `True`,
 the screen will be displayed, and keyboard operations can be used, but not vice versa
 
 ```python
-from rmaics import rmaics
+from rmaics import Rmaics
 car_num = 4
 game = rmaics(agent_num=car_num, render=True)
 game.reset()
 ```
 
-### 2. Perform one step
+### 2. Game stepping
 
-Incoming decision, get observations, rewards, whether to end, and other information,
-please refer to the specific format of the parameters: [params.md](./params.md)
+Stepping can be performed with the `step` function from `kernel.py`. The actions
+to perform on each step are passed as a (4 * 8) array. This is described further in
+[params.md](./params.md#actions).
+The return values for `step` are defined in []()
 
 ```python
 # action format (int, np.array): [['x', 'y', 'rotate', 'yaw', 'shoot', 'supply', 'shoot_mode', 'auto_aim'], ...]
@@ -54,19 +56,21 @@ obs, reward, done, _ = game.step(actions)
 
 ### 3. Use keyboard control
 
-If you use the keyboard to control manually, call the following function. Note: It can be called only 
-when `render` is `True`. Click the close icon of the window with the mouse to stop the game normally
+The game can be controlled manually via keyboard when `render` is set to `True` and then calling the following 
+function. Click the close icon to stop the game.
 
 ```python
 game.play()
 ```
 
-### 4. Save memory
+### 4. Saving memory
 
-The memory here refers to the memory of `kernal`, the memory will be saved as 
-[npy](https://stackoverflow.com/questions/4090080/what-is-the-way-data-is-stored-in-npy ) File, which 
-stores the information needed to reproduce the game. For how to play, 
-please refer to [record_player](./record_player.md), save as follows
+The memory here refers to the memory of the `kernel` object instantiated, and will be stored in a 
+[.npy](https://stackoverflow.com/questions/4090080/what-is-the-way-data-is-stored-in-npy ) file, which 
+stores the information needed to reproduce the game. For how to replay the memory, 
+please refer to [record_player](./record_player.md).
+
+Saving can be achieved by:
 
 ```python
 game.save_record(file='./records/record.npy')

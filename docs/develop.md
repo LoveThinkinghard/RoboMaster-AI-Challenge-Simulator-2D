@@ -1,22 +1,24 @@
-# Kernal Development Guide
+# Kernel Development Guide
 
-## One, development instructions
+## Step 1
 
 Please refer to the parameter format description during development: [params.md](./params.md)
 
-## Two, structure introduction
+## Step 2, structure introduction
 
-The core function of `kernal` is: `one_epoch`, which means to run a cycle. In a cycle, it 
-will call: `move_car`, `move_bullet`, and at the same time update visual field information, game information, etc.,
+The main way of advancing the simulation is `one_epoch()` in `kernel.py`, which means to run a cycle. In a cycle, it 
+will call: `move_car()`, `move_bullet()`, and at the same time update visual field information, game information, etc.,
 and update the game screen (if the screen is displayed)
 
-There are two functions that can call `one_epoch`: `step` and `play`. What `step` does is to get the 
-command `orders` passed in by the user, convert `orders` to `acts`, and then run for 10 cycles; the only 
-difference of `play` is that it will always run, then every ten cycles You will get an order from 
-the keyboard once. Note: `acts` in `kernal` is different from `actions` in `rmaics`, and `orders` in `kernal` 
-is the same as `actions` in `rmaics`
+There are two functions that can call `one_epoch()`: `step()` and `play()`.
+`step()` gets the command `orders` passed in by the user, converts `orders` to `acts`, and then runs 
+for 10 cycles; the only difference `play()` has that it will always run, then every ten cycles 
+You will get an order from the keyboard once. 
 
-## Three, what can be improved
+Note: `acts` in `kernel` is different from `actions` in `rmaics`, and 
+`orders` in `kernel` is the same as `actions` in `rmaics`
+
+## Three, improvements to be made
 
 ### 1. Running speed
 
@@ -36,7 +38,7 @@ what program is running, the CPU usage is about 20%. This is just to show the ac
 Test Code：
 
 ```python
-from rmaics import rmaics
+from rmaics import Rmaics
 import numpy as np
 import time
 
@@ -55,9 +57,9 @@ print(t2-t1)
 
 Use numba or Cython
 
-### 2. Parallel competition
+### 2. Parallel computation
 
-At the `kernal` level, multiple games are played at the same time, so that you don’t need to 
+At the `kernel` level, multiple games are played at the same time, so that you don’t need to 
 open multiple processes, which can improve the learning speed
 
 ### 3. Online confrontation
@@ -65,11 +67,11 @@ open multiple processes, which can improve the learning speed
 It is not convenient for a computer to operate four cars at the same time, so if people want to fight 
 against each other, they need to operate online, and the purpose of realizing the confrontation between 
 people is to allow imitation learning. The idea of imitation learning comes 
-from [DeepMind](https: //deepmind.com/)[AlphaStar](https://deepmind.com/blog/alphastar-mastering-real-time-strategy-game-starcraft-ii/)
+from [DeepMind](https://deepmind.com/) [AlphaStar](https://deepmind.com/blog/alphastar-mastering-real-time-strategy-game-starcraft-ii/)
 
 #### Operation Guide
 
-The other parts basically don’t need to be moved. Change the method of obtaining instructions to 
+The other parts basically don’t need to be changed. Change the method of obtaining instructions to 
 network access. In addition, you can change the control method of the pan/tilt to the mouse control in 
 the `get_order` function.
 
@@ -77,17 +79,17 @@ the `get_order` function.
 
 The simulator is not the real world after all. Adding some randomness will help improve the ability 
 of simulation to actual migration. The idea comes from the research 
-of [OpenAI](https://openai.com/) [Generalizing from Simulation](https://blog .openai.com/generalizing-from-simulation/)
+of [OpenAI](https://openai.com/) [Generalizing from Simulation](https://blog.openai.com/generalizing-from-simulation/)
 
 #### Operation Guide
 
 At the beginning of the function `move_car`, some errors are added to `self.acts`. For the specific 
-details of `acts`, please refer to [params.md](./params.md). Note that it is `acts in `kernal` `
+details of `acts`, please refer to [params.md](./params.md). Note that it is `acts` in `kernel`
 
 ### 5. Vision
 
-The field of view of the lidar and the camera is used to indicate that the car can be detected. When a car 
-is within the field of view of the camera, the car can be automatically targeted. The current vision 
+The field of view of the lidar and the camera is used to indicate that the robot can be detected. When a robot 
+is within the field of view of the camera, the robot can be automatically targeted. The current vision 
 algorithm is: firstly, check whether the angle is consistent, and then check whether there is 
 an obstacle (obstacle or car) on the center line of the two cars. The problem with this is: in some 
 tricky angles, there will be unreasonable vision

@@ -23,7 +23,7 @@ The simulation consists of two levels:
 > The high-level package class: `rmaics`  
 > The low-level implementation: `kernal`
 
-The user needs to define `rmaisc` the `get_observation` sum `get_reward` function in the class to define the observation 
+The user needs to define in `rmaisc` the `get_observation` and `get_reward` function in the class to define the observation 
 value and reward value; 
 the `kernal` class is only responsible for the simulation of the physical environment and the referee system.
 Therefore, when training the network, the ones that directly deal with users are `rmaisc` classified as
@@ -32,9 +32,9 @@ Therefore, when training the network, the ones that directly deal with users are
 
 Please find the content you need according to the following references
 
-Instructions for `rmaics`：[rmaics_manual.md](./docs/rmaics_manual.md)
+High-level training interface in `rmaics.py`：[rmaics_manual.md](./docs/rmaics_manual.md)
 
-Instructions `kernal`：[kernal_manual.md](./docs/kernal_manual.md)
+Low level simulation implementation in `kernel.py`：[kernal_manual.md](docs/kernel_manual.md)
 
 Instructions for `record player`：[record_player.md](./docs/record_player.md)
 
@@ -42,10 +42,6 @@ Instructions for controls：[operation.md](./docs/operation.md)
 
 Parameter format：[params.md](./docs/params.md)
 
-`kernal` development guide：[develop.md](./docs/develop.md)
-
-### 3. Other
-
-`kernel` is misspelt as `kernal`, needs to be corrected
+`kernel` development guide：[develop.md](./docs/develop.md)
 
 
