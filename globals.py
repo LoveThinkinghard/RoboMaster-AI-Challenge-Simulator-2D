@@ -69,8 +69,8 @@ def normalize_angle(angle):
 
 
 def find_rect_center(rect):
-    x_center = np.mean(rect[:, 0])
-    y_center = np.mean(rect[:, 1])
+    x_center = (rect[0][0] + rect[1][0]) / 2
+    y_center = (rect[0][1] + rect[1][1]) / 2
     return [x_center, y_center]
 
 
@@ -84,13 +84,6 @@ def point_inside_rect(p, rect, check_on=False):  # check if point is inside rect
     if check_on:
         return rect[0][0] <= p[0] <= rect[1][0] and rect[0][1] <= p[1] <= rect[1][1]
     return rect[0][0] < p[0] < rect[1][0] and rect[0][1] < p[1] < rect[1][1]
-
-
-def line_intersects_rects(p1, p2, rects):  # check if line (p1, p2) intersects any of the rectangles
-    for rect in rects:
-        if line_intersects_rect(p1, p2, rect):
-            return True
-    return False
 
 
 def line_intersects_rect(p1, p2, rect):  # check if line (p1, p2) intersects rectangle (p_top_left, p_bottom_right)

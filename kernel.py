@@ -183,14 +183,22 @@ class Kernel(object):
         #         robot.status[10] += 50
         #         self.compet_info[int(robot.team), 0] -= 1
 
+        # Check whether the robot n is on top of any zones, and apply the corresponding (de)buff.
+        # It currently checks whether the robot is on its teams zupply zone, the translucent gray rhombuses top
+        # and bottom middle of the field.
+        for zone in ZONES:
+            dist = np.abs(robot.status[1:3] - find_rect_center(zone)).sum()
+            if dist < 100:
+                robot.status[12] += 2
+
     def move_bullet(self, bullet):  # reviewed
         old_center = bullet.center.copy()
         bullet.center[0] += BULLET_SPEED * np.cos(np.deg2rad(bullet.angle))
         bullet.center[1] += BULLET_SPEED * np.sin(np.deg2rad(bullet.angle))
         
-        if not point_inside_rect(bullet.center, FIELD_DIMENSIONS):
+        if not point_inside_rect(bullet.center, FIELD):
             return True
-        if any([line_intersects_rects(old_center, bullet.center, b) for b in HIGH_BARRIERS]):
+        if any([line_intersects_rect(old_center, bullet.center, b) for b in HIGH_BARRIERS]):
             return True
         
         for robot in self.robots:
@@ -264,10 +272,14 @@ class Kernel(object):
                 return True
 
         pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_1]: self.n = 0
-        if pressed[pygame.K_2]: self.n = 1
-        if pressed[pygame.K_3]: self.n = 2
-        if pressed[pygame.K_4]: self.n = 3
+        if pressed[pygame.K_1]:
+            self.n = 0
+        if pressed[pygame.K_2]:
+            self.n = 1
+        if pressed[pygame.K_3]:
+            self.n = 2
+        if pressed[pygame.K_4]:
+            self.n = 3
         robot = self.robots[self.n]
         robot.commands[:] = 0
 
