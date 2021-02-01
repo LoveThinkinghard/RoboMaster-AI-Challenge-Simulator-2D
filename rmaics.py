@@ -1,18 +1,14 @@
-# -*- coding: utf-8 -*-
-# RoboMaster AI Challenge Simulator (RMAICS)
+from kernel import Kernel
 
-from kernal import kernal
 
-class rmaics(object):
-
+class Rmaics(object):
     def __init__(self, agent_num, render=True):
-        self.game = kernal(car_num=agent_num, render=render)
-        self.g_map = self.game.get_map()
+        self.game = Kernel(robot_count=agent_num, render=render)
+        # self.g_map = self.game.get_map()
         self.memory = []
 
     def reset(self):
         self.state = self.game.reset()
-        # state, object
         self.obs = self.get_observation(self.state)
         return self.obs
 
@@ -23,7 +19,6 @@ class rmaics(object):
 
         self.memory.append([self.obs, actions, rewards])
         self.state = state
-
         return obs, rewards, state.done, None
     
     def get_observation(self, state):

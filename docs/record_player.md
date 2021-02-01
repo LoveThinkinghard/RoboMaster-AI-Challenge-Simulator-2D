@@ -5,7 +5,7 @@
 ## 一、保存游戏记忆
 
 ```python
-from rmaics import rmaics
+from rmaics import Rmaics
 game = rmaics(agent_num=4, render=True)
 game.reset()
 # only when render = True
@@ -19,7 +19,7 @@ game.save_record('./records/record0.npy')
 ## 二、复现游戏
 
 ```python
-from kernal import record_player
+from kernel import record_player
 player = record_player()
 player.play('./records/record0.npy')
 ```

@@ -1,35 +1,29 @@
 
-class bullet(object):
-    def __init__(self, center, angle, speed, owner):
+class Bullet(object):
+    def __init__(self, center, angle, team):
         self.center = center.copy()
-        self.speed = speed
         self.angle = angle
-        self.owner = owner
+        self.team = team
 
 
-class state(object):
-    def __init__(self, time, agents, compet_info, done=False, detect=None, vision=None):
+class State(object):
+    def __init__(self, time, agents, compet_info, done=False):
         self.time = time
         self.agents = agents
         self.compet = compet_info
         self.done = done
-        self.detect = detect
-        self.vision = vision
 
 
-class record(object):
-    def __init__(self, time, cars, compet_info, detect, vision, bullets):
+class Record(object):
+    def __init__(self, time, cars, compet_info, bullets):
         self.time = time
         self.cars = cars
         self.compet_info = compet_info
-        self.detect = detect
-        self.vision = vision
         self.bullets = bullets
 
 
-class g_map(object):
-    def __init__(self, length, width, areas, barriers):
-        self.length = length
-        self.width = width
-        self.areas = areas
+class GameMap(object):
+    def __init__(self, dimensions, zones, barriers):
+        self.dimensions = dimensions
+        self.zones = zones
         self.barriers = barriers

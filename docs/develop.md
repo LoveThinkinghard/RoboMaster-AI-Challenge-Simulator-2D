@@ -28,7 +28,7 @@
 测试代码：
 
 ```python
-from rmaics import rmaics
+from rmaics import Rmaics
 import numpy as np
 import time
 

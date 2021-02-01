@@ -1,8 +1,11 @@
 import numpy as np
+import pygame
 
-FIELD_DIMENSIONS = [808, 448]
-ZONE_DIMENSIONS = [54, 48]
-SPAWN_DIMENSIONS = [100, 100]
+TEAM_RED = 0
+TEAM_BLUE = 1
+
+FIELD_DIMENSIONS = (808, 448)
+CAR_DIMENSIONS = (60, 45)
 HIGH_OBSTACLE_HEIGHT = 40
 LOW_BARRIER_HEIGHT = 15
 
@@ -17,7 +20,7 @@ ZONES = {
   ((591, 141), (645, 189)): 'zone',
   ((377, 20.5), (431, 68.5)): 'zone',
   ((23, 145), (77, 193)): 'zone',
-  ((160, 259), (214, 307)): 'zone',
+  ((163, 259), (217, 307)): 'zone',
   ((377, 379.5), (431, 427.5)): 'zone'
 }
 LOW_BARRIERS = {
@@ -33,33 +36,73 @@ HIGH_BARRIERS = {
   ((354, 93.5), (454, 113.5)): 'barrier_high_horizontal_marked',
   ((354, 334.5), (454, 354.5)): 'barrier_high_horizontal_marked'
 }
+BARRIERS = {**LOW_BARRIERS, **HIGH_BARRIERS}
+FIELD = ((0, 0), FIELD_DIMENSIONS)
+INFO_PANEL = ((184, 54), (624, 394))
+ROBOT = ((-CAR_DIMENSIONS[0] / 2, -CAR_DIMENSIONS[1] / 2), (CAR_DIMENSIONS[0] / 2, CAR_DIMENSIONS[1] / 2))
+SPAWN_HLENGTH = 50
+INFO_SPACING = (105, 17)
+INFO_START = (200, 70)
 
+MATCH_DURATION = 180
 THETA = np.rad2deg(np.arctan(45 / 60))
 
 # below parameters can be modified
 BULLET_SPEED = 12.5
-MOTION = 6
-ROTATE_MOTION = 4
-YAW_MOTION = 1
 CAMERA_ANGLE = 75 / 2
 LIDAR_ANGLE = 120 / 2
-MOVE_DISCOUNT = 0.6
+COLLISION_COEFFICENT = 0.6
 
 # colors
-GRAY = (180, 180, 180)
-RED = (190, 20, 20)
-BLUE = (10, 125, 181)
+COLOR_GRAY = (112, 119, 127)
+COLOR_RED = (210, 0, 0)
+COLOR_BLUE = (0, 0, 210)
+COLOR_BLACK = (0, 0, 0)
 
 
-def find_rect_center(rect_coords):
-    x_center = np.mean(rect_coords[:, 0])
-    y_center = np.mean(rect_coords[:, 1])
+def normalize_angle(angle):
+    if angle > 180:
+        angle -= 360
+    if angle <= -180:
+        angle += 360
+    return angle
+
+
+def find_rect_center(rect):
+    x_center = np.mean(rect[:, 0])
+    y_center = np.mean(rect[:, 1])
     return [x_center, y_center]
 
 
-def cross(p1, p2, p3):
-    x1 = p2[0] - p1[0]
-    y1 = p2[1] - p1[1]
-    x2 = p3[0] - p1[0]
-    y2 = p3[1] - p1[1]
-    return x1 * y2 - x2 * y1
+def rect_to_pygame(rect):  # convert rectangle (p_top_left, p_bottom_right) to pygame Rect(left, top, width, height)
+    width = rect[1][0] - rect[0][0]
+    height = rect[1][1] - rect[0][1]
+    return pygame.Rect(*rect[0], width, height)
+
+
+def point_inside_rect(p, rect, check_on=False):  # check if point is inside rectangle (and on rectangle if check_on=True)
+    if check_on:
+        return rect[0][0] <= p[0] <= rect[1][0] and rect[0][1] <= p[1] <= rect[1][1]
+    return rect[0][0] < p[0] < rect[1][0] and rect[0][1] < p[1] < rect[1][1]
+
+
+def line_intersects_rects(p1, p2, rects):  # check if line (p1, p2) intersects any of the rectangles
+    for rect in rects:
+        if line_intersects_rect(p1, p2, rect):
+            return True
+    return False
+
+
+def line_intersects_rect(p1, p2, rect):  # check if line (p1, p2) intersects rectangle (p_top_left, p_bottom_right)
+    p_top_right = (rect[1][0], rect[0][1])
+    p_bottom_left = (rect[0][1], rect[1][0])
+    return any([lines_intersect(p1, p2, rect[0], p_top_right), lines_intersect(p1, p2, p_top_right, rect[1]),
+                lines_intersect(p1, p2, rect[1], p_bottom_left), lines_intersect(p1, p2, p_bottom_left, rect[0])])
+
+
+def lines_intersect(p11, p12, p21, p22):  # check if two line segments (p11, p12) and (p21, p22) intersect
+    return ccw(p11, p21, p22) != ccw(p12, p21, p22) and ccw(p11, p12, p21) != ccw(p11, p12, p22)
+
+
+def ccw(p1, p2, p3):  # check if three points p1, p2, p3 are oriented CCW
+    return (p2[1] - p1[1]) * (p3[0] - p1[0]) < (p3[1] - p1[1]) * (p2[0] - p1[0])

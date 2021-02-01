@@ -1,31 +1,14 @@
 import numpy as np
+from globals import *
+import pygame
 
 
 class record_player(object):
     def __init__(self):
-        self.map_length = 808
-        self.map_width = 448
-        global pygame
-        import pygame
         pygame.init()
         self.screen = pygame.display.set_mode((self.map_length, self.map_width))
         pygame.display.set_caption('RM AI Challenge Simulator')
-        self.areas = np.array([[[580.0, 680.0, 275.0, 375.0],
-                                [350.0, 450.0, 0.0, 100.0],
-                                [700.0, 800.0, 400.0, 500.0],
-                                [0.0, 100.0, 400.0, 500.0]],
-                               [[120.0, 220.0, 125.0, 225.0],
-                                [350.0, 450.0, 400.0, 500.0],
-                                [0.0, 100.0, 0.0, 100.0],
-                                [700.0, 800.0, 0.0, 100.0]]], dtype='float32')
-        # self.barriers = np.array([[350.0, 450.0, 237.5, 262.5],
-        #                           [120.0, 220.0, 100.0, 125.0],
-        #                           [580.0, 680.0, 375.0, 400.0],
-        #                           [140.0, 165.0, 260.0, 360.0],
-        #                           [635.0, 660.0, 140.0, 240.0],
-        #                           [325.0, 350.0, 400.0, 500.0],
-        #                           [450.0, 475.0, 0.0, 100.0]], dtype='float32')
-        # load barriers imgs
+
         self.barriers_img = []
         self.barriers_rect = []
         for index, barrier in enumerate(HIGH_BARRIERS):
@@ -46,10 +29,10 @@ class record_player(object):
         self.head_rect = [self.head_img[i].get_rect() for i in range(len(self.head_img))]
         self.head_rect[0].center = [self.areas[0, 1][0:2].mean(), self.areas[0, 1][2:4].mean()]
         self.head_rect[1].center = [self.areas[1, 1][0:2].mean(), self.areas[1, 1][2:4].mean()]
-        self.chassis_img = pygame.image.load('./imgs/chassis_g.png')
-        self.gimbal_img = pygame.image.load('./imgs/gimbal_g.png')
-        self.bullet_img = pygame.image.load('./imgs/bullet_s.png')
-        self.info_bar_img = pygame.image.load('./imgs/info_bar.png')
+        self.chassis_img = pygame.image.load('elements/chassis.png')
+        self.gimbal_img = pygame.image.load('elements/gimbal.png')
+        self.bullet_img = pygame.image.load('elements/bullet.png')
+        self.info_bar_img = pygame.image.load('elements/info_panel.png')
         self.bullet_rect = self.bullet_img.get_rect()
         self.info_bar_rect = self.info_bar_img.get_rect()
         self.info_bar_rect.center = [200, self.map_width/2]
@@ -64,7 +47,7 @@ class record_player(object):
         flag = 0
         while True:
             self.time = self.memory[i].time
-            self.cars = self.memory[i].cars
+            self.cars = self.memory[i].robots
             self.car_num = len(self.cars)
             self.compet_info = self.memory[i].compet_info
             self.detect = self.memory[i].detect
@@ -87,7 +70,7 @@ class record_player(object):
             self.clock.tick(200)
 
     def one_epoch(self):
-        self.screen.fill(GRAY)
+        self.screen.fill(COLOR_GRAY)
         for i in range(len(self.barriers_rect)):
             self.screen.blit(self.barriers_img[i], self.barriers_rect[i])
         for i in range(len(self.areas_rect)):
@@ -106,9 +89,9 @@ class record_player(object):
             self.screen.blit(gimbal_rotate, gimbal_rotate_rect)
             select = np.where((self.vision[n] == 1))[0]+1
             select2 = np.where((self.detect[n] == 1))[0]+1
-            info = self.font.render('{} | {}: {} {}'.format(int(self.cars[n, 6]), n+1, select, select2), True, BLUE if self.cars[n, 0] else RED)
+            info = self.font.render('{} | {}: {} {}'.format(int(self.cars[n, 6]), n+1, select, select2), True, COLOR_BLUE if self.cars[n, 0] else COLOR_RED)
             self.screen.blit(info, self.cars[n, 1:3]+[-20, -60])
-            info = self.font.render('{} {}'.format(int(self.cars[n, 10]), int(self.cars[n, 5])), True, BLUE if self.cars[n, 0] else RED)
+            info = self.font.render('{} {}'.format(int(self.cars[n, 10]), int(self.cars[n, 5])), True, COLOR_BLUE if self.cars[n, 0] else COLOR_RED)
             self.screen.blit(info, self.cars[n, 1:3]+[-20, -45])
         self.screen.blit(self.head_img[0], self.head_rect[0])
         self.screen.blit(self.head_img[1], self.head_rect[1])
@@ -118,10 +101,10 @@ class record_player(object):
             for n in range(self.car_num):
                 wheels = self.check_points_wheel(self.cars[n])
                 for w in wheels:
-                    pygame.draw.circle(self.screen, BLUE if self.cars[n, 0] else RED, w.astype(int), 3)
+                    pygame.draw.circle(self.screen, COLOR_BLUE if self.cars[n, 0] else COLOR_RED, w.astype(int), 3)
                 armors = self.check_points_armor(self.cars[n])
                 for a in armors:
-                    pygame.draw.circle(self.screen, BLUE if self.cars[n, 0] else RED, a.astype(int), 3)
+                    pygame.draw.circle(self.screen, COLOR_BLUE if self.cars[n, 0] else COLOR_RED, a.astype(int), 3)
             self.screen.blit(self.info_bar_img, self.info_bar_rect)
             for n in range(self.car_num):
                 tags = ['owner', 'x', 'y', 'angle', 'yaw', 'heat', 'hp', 'freeze_time', 'is_supply',
@@ -138,22 +121,3 @@ class record_player(object):
                                 self.compet_info[1, 1], self.compet_info[1, 3]), False, (0, 0, 0))
             self.screen.blit(info, (8, 389))
         pygame.display.flip()
-
-    def check_points_wheel(self, car):
-        rotate_matrix = np.array([[np.cos(-np.deg2rad(car[3]+90)), -np.sin(-np.deg2rad(car[3]+90))],
-                                  [np.sin(-np.deg2rad(car[3]+90)), np.cos(-np.deg2rad(car[3]+90))]])
-        xs = np.array([[-22.5, -29], [22.5, -29],
-                       [-22.5, -14], [22.5, -14],
-                       [-22.5, 14], [22.5, 14],
-                       [-22.5, 29], [22.5, 29]])
-        return [np.matmul(xs[i], rotate_matrix) + car[1:3] for i in range(xs.shape[0])]
-
-    def check_points_armor(self, car):
-        rotate_matrix = np.array([[np.cos(-np.deg2rad(car[3]+90)), -np.sin(-np.deg2rad(car[3]+90))],
-                                  [np.sin(-np.deg2rad(car[3]+90)), np.cos(-np.deg2rad(car[3]+90))]])
-        xs = np.array([[-6.5, -30], [6.5, -30],
-             [-18.5,  -7], [18.5,  -7],
-             [-18.5,  0], [18.5,  0],
-             [-18.5,  6], [18.5,  6],
-             [-6.5, 30], [6.5, 30]])
-        return [np.matmul(x, rotate_matrix) + car[1:3] for x in xs]
