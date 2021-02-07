@@ -3,6 +3,7 @@ from objects import *
 from globals import *
 from robot import Robot
 import pygame
+import random
 
 
 class Kernel(object):
@@ -11,6 +12,7 @@ class Kernel(object):
         self.render = render
         self.record = record
         self.time, self.obs, self.compet_info, self.bullets, self.epoch, self.n, self.dev, self.memory, self.robots = None, None, None, None, None, None, None, None, None
+        self.zones = None
         self.reset()
 
         if render:
@@ -48,6 +50,7 @@ class Kernel(object):
                        Robot(2, TEAM_BLUE, SPAWN_HLENGTH, FIELD_DIMENSIONS[1] - SPAWN_HLENGTH),
                        Robot(3, TEAM_RED, FIELD_DIMENSIONS[0] - SPAWN_HLENGTH, SPAWN_HLENGTH),
                        Robot(1, TEAM_RED, FIELD_DIMENSIONS[0] - SPAWN_HLENGTH, FIELD_DIMENSIONS[1] - SPAWN_HLENGTH)][:self.car_count]
+        self.randomize_zones()
         return State(self.time, self.robots, self.compet_info, self.time <= 0)
 
     def play(self):
@@ -95,6 +98,10 @@ class Kernel(object):
                 del self.bullets[i]
             else:
                 i += 1
+
+        # randomize zones every minute
+        if self.epoch == ZONE_RESET * 200 or self.epoch == 2 * ZONE_RESET * 200:
+            self.randomize_zones()
 
         self.epoch += 1
         if self.record:
@@ -184,7 +191,7 @@ class Kernel(object):
         #         self.compet_info[int(robot.team), 0] -= 1
 
         # Check whether the robot n is on top of any zones, and apply the corresponding (de)buff.
-        # It currently checks whether the robot is on its teams zupply zone, the translucent gray rhombuses top
+        # It currently checks whether the robot is on its teams supply zone, the translucent gray rhombuses top
         # and bottom middle of the field.
         for zone in ZONES:
             dist = np.abs(robot.status[1:3] - find_rect_center(zone)).sum()
@@ -350,6 +357,23 @@ class Kernel(object):
 
     def save_record(self, file):
         np.save(file, self.memory)
+
+    def randomize_zones(self):
+        self.zones = [''] * 6
+
+        buff = random.sample(ZONE_TYPES[:2], k=2)
+        buff_pos = random.sample([0, 1, 2], k=2)
+        debuff = random.sample(ZONE_TYPES[2:], k=2)
+        debuff_pos = 3 - np.sum(buff_pos)   # debuff goes where the buffs arent
+
+        for i in range(len(buff)):
+            self.zones[buff_pos[i]] = buff[i]
+            self.zones[3 + buff_pos[i]] = buff[i]
+
+        self.zones[debuff_pos] = debuff[0]
+        self.zones[3 + debuff_pos] = debuff[1]
+
+        print(f'self.zones={self.zones}')
 
 
 # important indexs

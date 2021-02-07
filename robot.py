@@ -14,6 +14,7 @@ class Robot:
     def __init__(self, id_, team, x_start, y_start):
         angle_start = 90 if (team == TEAM_RED) else -90
         bullet_start = 50 if id_ <= 1 else 0
+        #  0    1  2    3     4    5    6        7           8          9        10       11         12         13         14
         # team, x, y, angle, yaw, heat, hp, freeze_time, is_supply, can_shoot, bullet, stay_time, wheel_hit, armor_hit, robot_hit
         self.status = np.array([team, x_start, y_start, angle_start, 0, 0, 2000, 0, 0, 1, bullet_start, 0, 0, 0, 0], dtype=np.float32)
         self.id_ = id_

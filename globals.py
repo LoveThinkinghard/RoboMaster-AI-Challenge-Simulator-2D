@@ -10,6 +10,7 @@ SPAWN_HLENGTH = 50
 HIGH_OBSTACLE_HEIGHT = 40
 LOW_BARRIER_HEIGHT = 15
 
+# top left (x, y), bottom right (x, y)
 SPAWNS = {
   ((0, 0), (100, 100)): 'spawn_blue',
   ((0, 348), (100, 448)): 'spawn_blue',
@@ -17,13 +18,19 @@ SPAWNS = {
   ((708, 348), (808, 448)): 'spawn_red'
 }
 ZONES = {
-  ((731, 255), (785, 303)): 'zone',
-  ((591, 141), (645, 189)): 'zone',
-  ((377, 20.5), (431, 68.5)): 'zone',
   ((23, 145), (77, 193)): 'zone',
   ((163, 259), (217, 307)): 'zone',
+  ((377, 20.5), (431, 68.5)): 'zone',
+  ((731, 255), (785, 303)): 'zone',
+  ((591, 141), (645, 189)): 'zone',
   ((377, 379.5), (431, 427.5)): 'zone'
 }
+ZONE_TYPES = [
+    'hp',
+    'ammo',
+    'no_shoot',
+    'no_move'
+]
 LOW_BARRIERS = {
   ((150, 214), (230, 234)): 'barrier_low_horizontal_marked',
   ((578, 214), (658, 234)): 'barrier_low_horizontal_marked',
@@ -45,6 +52,7 @@ INFO_SPACING = (105, 17)
 INFO_START = (200, 70)
 
 MATCH_DURATION = 180
+ZONE_RESET = 60
 THETA = np.rad2deg(np.arctan(45 / 60))
 
 # below parameters can be modified
