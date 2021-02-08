@@ -11,6 +11,8 @@ ARMOR_CENTERS = ((-30, 0), (18.0, 5), (30, 0), (0, -18.5))
 
 
 class Robot:
+    count_red = 0
+    count_blue = 0
     def __init__(self, id_, team, x_start, y_start):
         angle_start = 180 if (team == TEAM_RED) else 0
         bullet_start = 50 if id_ <= 1 else 0
@@ -19,6 +21,13 @@ class Robot:
         self.status = np.array([team, x_start, y_start, angle_start, 0, 0, 2000, 0, 0, 1, bullet_start, 0, 0, 0, 0], dtype=np.float32)
         self.id_ = id_
         self.team = team
+        self.x = x_start
+        self.y = y_start
+        self.angle = angle_start
+        self.yaw = 0
+        self.heat = 0
+        self.hp = 2000
+        # self.
         self.color = COLOR_RED if (team == TEAM_RED) else COLOR_BLUE
         self.commands = np.zeros(8, dtype=np.int8)  # x, y, rotate, yaw, shoot, supply, shoot_mode, auto_aim
         self.actions = np.zeros(8, dtype=np.float32)  # rotate_speed, yaw_speed, x_speed, y_speed, shoot, shoot_multiple, supply, auto_aim

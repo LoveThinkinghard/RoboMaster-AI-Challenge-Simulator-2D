@@ -17,14 +17,15 @@ class Kernel(object):
 
         if render:
             pygame.init()
-            self.screen = pygame.display.set_mode(FIELD_DIMENSIONS)
+            self.screen = pygame.display.set_mode(FIELD.dimensions)
             pygame.display.set_caption('RM AI Challenge Simulator')
 
             self.area_images = []
             self.area_rects = []
-            for area, image_file in {**LOW_BARRIERS, **HIGH_BARRIERS, **SPAWNS, **ZONES}.items():
-                self.area_images.append(pygame.image.load(f'elements/{image_file}.png'))
-                self.area_rects.append(rect_to_pygame(area))
+
+            for area, image_file in zip((*ZONES, *SPAWNS, *LOW_BARRIERS, *HIGH_BARRIERS), (*ZONE_IMAGES, *SPAWN_IMAGES, *LOW_BARRIER_IMAGES, *HIGH_BARRIER_IMAGES)):
+                self.area_images.append(pygame.image.load(f'elements/{image_file}.png').convert_alpha())
+                self.area_rects.append(area.to_rect())
 
             self.chassis_blue_img = pygame.image.load('elements/chassis_blue.png')
             self.chassis_red_img = pygame.image.load('elements/chassis_red.png')
@@ -32,7 +33,7 @@ class Kernel(object):
             self.bullet_img = pygame.image.load('elements/bullet.png')
             self.info_bar_img = pygame.image.load('elements/info_panel.png')
             self.bullet_rect = self.bullet_img.get_rect()
-            self.info_bar_rect = rect_to_pygame(INFO_PANEL)
+            self.info_bar_rect = INFO_PANEL.to_rect()
             pygame.font.init()
             self.font = pygame.font.SysFont('mono', 12)
             self.clock = pygame.time.Clock()
@@ -46,10 +47,10 @@ class Kernel(object):
         self.n = 0
         self.dev = False
         self.memory = []
-        self.robots = [Robot(0, TEAM_BLUE, SPAWN_HLENGTH, SPAWN_HLENGTH),
-                       Robot(2, TEAM_BLUE, SPAWN_HLENGTH, FIELD_DIMENSIONS[1] - SPAWN_HLENGTH),
-                       Robot(3, TEAM_RED, FIELD_DIMENSIONS[0] - SPAWN_HLENGTH, SPAWN_HLENGTH),
-                       Robot(1, TEAM_RED, FIELD_DIMENSIONS[0] - SPAWN_HLENGTH, FIELD_DIMENSIONS[1] - SPAWN_HLENGTH)][:self.car_count]
+        self.robots = [Robot(0, TEAM_BLUE, *SPAWNS[0].center),
+                       Robot(2, TEAM_BLUE, *SPAWNS[1].center),
+                       Robot(3, TEAM_RED, *SPAWNS[2].center),
+                       Robot(1, TEAM_RED, *SPAWNS[3].center)][:self.car_count]
         self.randomize_zones()
         return State(self.time, self.robots, self.compet_info, self.time <= 0)
 
@@ -105,15 +106,15 @@ class Kernel(object):
 
         self.epoch += 1
         if self.record:
-            bullets = [Bullet(b.center, b.angle, b.id_) for b in self.bullets]
+            bullets = [Bullet(b.center, b.angle, b.owner_id) for b in self.bullets]
             self.memory.append(Record(self.time, self.robots.copy(), self.compet_info.copy(), bullets))
         if self.render:
             self.update_display()
 
     def move_robot(self, robot):  # reviewed
-        if robot.status[7]:  # unfreeze robot if frozen
-            robot.status[7] -= 1
-            return
+        # if robot.status[7]:  # unfreeze robot if frozen
+        #     robot.status[7] -= 1
+        #     return
 
         if robot.actions[0]:  # rotate chassis
             old_angle = robot.status[3]
@@ -194,7 +195,7 @@ class Kernel(object):
         # It currently checks whether the robot is on its teams supply zone, the translucent gray rhombuses top
         # and bottom middle of the field.
         for zone in ZONES:
-            dist = np.abs(robot.status[1:3] - find_rect_center(zone)).sum()
+            dist = np.abs(robot.status[1:3] - zone.center).sum()
             if dist < 100:
                 robot.status[12] += 2
 
@@ -203,18 +204,18 @@ class Kernel(object):
         bullet.center[0] += BULLET_SPEED * np.cos(np.deg2rad(bullet.angle))
         bullet.center[1] += BULLET_SPEED * np.sin(np.deg2rad(bullet.angle))
         
-        if not point_inside_rect(bullet.center, FIELD):
+        if not FIELD.contains(bullet.center, strict=True):
             return True
-        if any([line_intersects_rect(old_center, bullet.center, b) for b in HIGH_BARRIERS]):
+        if any(b.intersects(old_center, bullet.center) for b in HIGH_BARRIERS):
             return True
         
         for robot in self.robots:
-            if robot.id_ == bullet.id_:
+            if robot.id_ == bullet.owner_id:
                 continue
             if np.abs(robot.status[1:3] - bullet.center).sum() < 52.5:
                 points = robot.transfer_to_car_coordinate(np.array([bullet.center, old_center]))
-                if any([lines_intersect(points[0], points[1], [-18.5, -5], [-18.5, 6]),
-                        lines_intersect(points[0], points[1], [18.5, -5], [18.5, 6]),
+                if any([lines_intersect(points[0], points[1], [-18.5, -5], [-18.5, 5]),
+                        lines_intersect(points[0], points[1], [18.5, -5], [18.5, 5]),
                         lines_intersect(points[0], points[1], [-5, 30], [5, 30]),
                         lines_intersect(points[0], points[1], [-5, -30], [5, -30])]):
                     if self.compet_info[int(robot.team), 3]:
@@ -222,7 +223,7 @@ class Kernel(object):
                     else:
                         robot.status[6] -= 50
                     return True
-                if line_intersects_rect(points[0], points[1], ((-18, -29), (18, 29))):
+                if ROBOT_BLOCK.intersects(points[0], points[1]):
                     return True
         return False
 
@@ -248,7 +249,7 @@ class Kernel(object):
             info = self.font.render(f'{int(robot.status[6])}', False, COLOR_RED if (robot.team == TEAM_RED) else COLOR_BLUE)
             self.screen.blit(info, robot.status[1:3] + [-15, -50])
         info = self.font.render(f'time: {self.time}', False, COLOR_BLACK)
-        self.screen.blit(info, (FIELD_DIMENSIONS[0] / 2 - 29, 3))
+        self.screen.blit(info, (FIELD.dimensions[0] / 2 - 29, 3))
         if self.dev:
             self.dev_window()
         pygame.display.flip()
@@ -332,11 +333,11 @@ class Kernel(object):
 
     def check_interference(self, robot):  # reviewed
         wheels = robot.get_wheel_points()  # check wheel interference with walls/barriers
-        if any(not point_inside_rect(w, FIELD) or any([point_inside_rect(w, b, check_on=True) for b in BARRIERS]) for w in wheels):
+        if any(not FIELD.contains(w, strict=True) or any(b.contains(w) for b in (*LOW_BARRIERS, *HIGH_BARRIERS)) for w in wheels):
             robot.status[12] += 1
             return True
         armors = robot.get_armor_points()  # check armor interference with walls/barriers
-        if any(not point_inside_rect(a, FIELD) or any([point_inside_rect(a, b, check_on=True) for b in BARRIERS]) for a in armors):
+        if any(not FIELD.contains(a, strict=True) or any(b.contains(a) for b in (*LOW_BARRIERS, *HIGH_BARRIERS)) for a in armors):
             robot.status[13] += 1
             robot.status[6] -= 10
             return True
@@ -345,11 +346,11 @@ class Kernel(object):
             if robot.id_ == other_robot.id_:
                 continue
             wheels_trans = other_robot.transfer_to_car_coordinate(wheels)  # check wheel interference with other robots
-            if any(point_inside_rect(w, ROBOT, check_on=True) for w in wheels_trans):
+            if any(ROBOT.contains(w) for w in wheels_trans):
                 robot.status[14] += 1
                 return True
             armors_trans = other_robot.transfer_to_car_coordinate(armors)  # check armor interference with other robots
-            if any(point_inside_rect(a, ROBOT, check_on=True) for a in armors_trans):
+            if any(ROBOT.contains(a) for a in armors_trans):
                 robot.status[14] += 1
                 robot.status[6] -= 10
                 return True
