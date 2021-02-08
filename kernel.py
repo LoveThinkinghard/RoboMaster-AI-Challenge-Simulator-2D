@@ -27,10 +27,27 @@ class Kernel(object):
                 self.area_images.append(pygame.image.load(f'elements/{image_file}.png').convert_alpha())
                 self.area_rects.append(area.to_rect())
 
-            self.chassis_blue_img = pygame.image.load('elements/chassis_blue.png')
-            self.chassis_red_img = pygame.image.load('elements/chassis_red.png')
-            self.gimbal_img = pygame.image.load('elements/gimbal.png')
-            self.bullet_img = pygame.image.load('elements/bullet.png')
+            self.area_images.append(pygame.image.load(f'elements/icon/no_move.png').convert_alpha())
+            self.area_rects.append(Box(20, 20, 300, 300).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
+            self.area_rects.append(Box(54, 48, 300, 300).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/icon/no_shoot.png').convert_alpha())
+            self.area_rects.append(Box(20, 20, 300, 250).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
+            self.area_rects.append(Box(54, 48, 300, 250).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/icon/ammo.png').convert_alpha())
+            self.area_rects.append(Box(20, 20, 300, 200).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
+            self.area_rects.append(Box(54, 48, 300, 200).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/icon/hp.png').convert_alpha())
+            self.area_rects.append(Box(20, 20, 300, 150).to_rect())
+            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
+            self.area_rects.append(Box(54, 48, 300, 150).to_rect())
+
+            self.chassis_blue_img = pygame.image.load('elements/robot/blue.png')
+            self.chassis_red_img = pygame.image.load('elements/robot/red.png')
+            self.gimbal_img = pygame.image.load('elements/robot/gimbal.png')
+            self.bullet_img = pygame.image.load('elements/robot/bullet.png')
             self.info_bar_img = pygame.image.load('elements/info_panel.png')
             self.bullet_rect = self.bullet_img.get_rect()
             self.info_bar_rect = INFO_PANEL.to_rect()
@@ -235,6 +252,7 @@ class Kernel(object):
         for i in range(len(self.bullets)):
             self.bullet_rect.center = self.bullets[i].center
             self.screen.blit(self.bullet_img, self.bullet_rect)
+
         for robot in self.robots:
             chassis_img = self.chassis_red_img if (robot.team == TEAM_RED) else self.chassis_blue_img
             chassis_rotate = pygame.transform.rotate(chassis_img, -robot.status[3])

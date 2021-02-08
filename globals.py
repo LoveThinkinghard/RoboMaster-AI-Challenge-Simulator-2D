@@ -9,10 +9,10 @@ ZONES = [Box(54, 48, *c) for c in [(50, 169), (190, 566), (404, 44.5), (758, 279
 LOW_BARRIERS = [Box(80, 20, 190, 224), Box(35.4, 35.4, 404, 224), Box(80, 20, 618, 224)]
 HIGH_BARRIERS = [Box(100, 20, 50, 110), Box(20, 100, 160, 398), Box(100, 20, 394, 103.5), Box(100, 20, 394, 344.5), Box(20, 100, 648, 50), Box(100, 20, 758, 338)]
 
-SPAWN_IMAGES = ['spawn_blue', 'spawn_blue', 'spawn_red', 'spawn_red']
-ZONE_IMAGES = ['zone_inactive'] * 6
-LOW_BARRIER_IMAGES = ['barrier_lhm', 'barrier_lcm', 'barrier_lhm']
-HIGH_BARRIER_IMAGES = ['barrier_hhu', 'barrier_hvu', 'barrier_hhm', 'barrier_hhm', 'barrier_hvu', 'barrier_hhu']
+SPAWN_IMAGES = ['zone/blue', 'zone/blue', 'zone/red', 'zone/red']
+ZONE_IMAGES = ['zone/inactive'] * 6
+LOW_BARRIER_IMAGES = ['barrier/lhm', 'barrier/lcm', 'barrier/lhm']
+HIGH_BARRIER_IMAGES = ['barrier/hhu', 'barrier/hvu', 'barrier/hhm', 'barrier/hhm', 'barrier/hvu', 'barrier/hhu']
 
 FIELD = Box(808, 448)
 ROBOT = Box(60, 43, 0, 0)
