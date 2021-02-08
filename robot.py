@@ -4,15 +4,15 @@ from globals import *
 MOTION = 6
 ROTATE_MOTION = 4
 YAW_MOTION = 1
-WHEEL_POINTS = ((-22.5, -29), (22.5, -29), (-22.5, -14), (22.5, -14), (-22.5, 14), (22.5, 14), (-22.5, 29), (22.5, 29))
-ARMOR_POINTS = ((-6.5, -30), (6.5, -30), (-18.5, -7), (18.5, -7), (-18.5, 0), (18.5, 0), (-18.5, 6), (18.5, 6), (-6.5, 30), (6.5, 30))
-OUTLINE_POINTS = ((-22.5, -30), (22.5, 30), (-22.5, 30), (22.5, -30))
-ARMOR_CENTERS = ((0, -30), (18.5, 0), (0, 30), (-18.5, 0))
+WHEEL_POINTS = ((-29, -22.5), (-29, 22.5), (-14, -22.5), (-14, 22.5), (14, -22.5), (14, 22.5), (29, -22.5), (29, 22.5))
+ARMOR_POINTS = ((-30, -6.5), (-30, 6.5), (-7, -18.5), (-7, 18.5), (0, -18.5), (0, 18.5), (6, -18.5), (6, 18.5), (30, -6.5), (30, 6.5))
+OUTLINE_POINTS = ((-30, -22.5), (30, 22.5), (30, -22.5), (-30, 22.5))
+ARMOR_CENTERS = ((-30, 0), (18.0, 5), (30, 0), (0, -18.5))
 
 
 class Robot:
     def __init__(self, id_, team, x_start, y_start):
-        angle_start = 90 if (team == TEAM_RED) else -90
+        angle_start = 180 if (team == TEAM_RED) else 0
         bullet_start = 50 if id_ <= 1 else 0
         #  0    1  2    3     4    5    6        7           8          9        10       11         12         13         14
         # team, x, y, angle, yaw, heat, hp, freeze_time, is_supply, can_shoot, bullet, stay_time, wheel_hit, armor_hit, robot_hit

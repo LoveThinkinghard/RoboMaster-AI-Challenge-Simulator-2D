@@ -1,9 +1,9 @@
 
 class Bullet(object):
-    def __init__(self, center, angle, team):
+    def __init__(self, center, angle, id_):
         self.center = center.copy()
         self.angle = angle
-        self.team = team
+        self.id_ = id_
 
 
 class State(object):

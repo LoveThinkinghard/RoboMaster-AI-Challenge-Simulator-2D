@@ -95,6 +95,7 @@ def point_inside_rect(p, rect, check_on=False):  # check if point is inside rect
 
 
 def line_intersects_rect(p1, p2, rect):  # check if line (p1, p2) intersects rectangle (p_top_left, p_bottom_right)
+    print(rect)
     p_top_right = (rect[1][0], rect[0][1])
     p_bottom_left = (rect[0][1], rect[1][0])
     return any([lines_intersect(p1, p2, rect[0], p_top_right), lines_intersect(p1, p2, p_top_right, rect[1]),

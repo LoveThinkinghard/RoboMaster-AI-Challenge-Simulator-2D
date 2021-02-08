@@ -105,7 +105,7 @@ class Kernel(object):
 
         self.epoch += 1
         if self.record:
-            bullets = [Bullet(b.center, b.angle, b.team) for b in self.bullets]
+            bullets = [Bullet(b.center, b.angle, b.id_) for b in self.bullets]
             self.memory.append(Record(self.time, self.robots.copy(), self.compet_info.copy(), bullets))
         if self.render:
             self.update_display()
@@ -143,7 +143,7 @@ class Kernel(object):
         if robot.actions[4] and robot.status[10]:  # handle firing
             if robot.status[9]:
                 robot.status[10] -= 1
-                self.bullets.append(Bullet(robot.status[1:3], robot.status[4] + robot.status[3], robot.team))
+                self.bullets.append(Bullet(robot.status[1:3], robot.status[4] + robot.status[3], robot.id_))
                 robot.status[5] += BULLET_SPEED
                 robot.status[9] = 0
             else:
@@ -209,7 +209,7 @@ class Kernel(object):
             return True
         
         for robot in self.robots:
-            if robot.team == bullet.team:
+            if robot.id_ == bullet.id_:
                 continue
             if np.abs(robot.status[1:3] - bullet.center).sum() < 52.5:
                 points = robot.transfer_to_car_coordinate(np.array([bullet.center, old_center]))
@@ -222,7 +222,7 @@ class Kernel(object):
                     else:
                         robot.status[6] -= 50
                     return True
-                if line_intersects_rect(points[0], points[1], [-18, -29, 18, 29]):
+                if line_intersects_rect(points[0], points[1], ((-18, -29), (18, 29))):
                     return True
         return False
 
@@ -236,8 +236,8 @@ class Kernel(object):
             self.screen.blit(self.bullet_img, self.bullet_rect)
         for robot in self.robots:
             chassis_img = self.chassis_red_img if (robot.team == TEAM_RED) else self.chassis_blue_img
-            chassis_rotate = pygame.transform.rotate(chassis_img, -robot.status[3] - 90)
-            gimbal_rotate = pygame.transform.rotate(self.gimbal_img, -robot.status[4] - robot.status[3] - 90)
+            chassis_rotate = pygame.transform.rotate(chassis_img, -robot.status[3])
+            gimbal_rotate = pygame.transform.rotate(self.gimbal_img, -robot.status[4] - robot.status[3])
             chassis_rotate_rect = chassis_rotate.get_rect()
             gimbal_rotate_rect = gimbal_rotate.get_rect()
             chassis_rotate_rect.center = robot.status[1:3]
@@ -268,9 +268,9 @@ class Kernel(object):
                 info = self.font.render(f'{tags[i]}: {int(data)}', False, COLOR_BLACK)
                 self.screen.blit(info, (INFO_START[0] + n * INFO_SPACING[0], INFO_START[1] + (i + 1) * INFO_SPACING[1]))
 
-        info = self.font.render(f'red supply: {self.compet_info[0, 0]}\tbonus: {self.compet_info[0, 1]}\tbonus_time: {self.compet_info[0, 3]}', False, COLOR_BLACK)
+        info = self.font.render(f'red supply: {self.compet_info[0, 0]}  bonus: {self.compet_info[0, 1]}  bonus_time: {self.compet_info[0, 3]}', False, COLOR_BLACK)
         self.screen.blit(info, (INFO_START[0], INFO_START[1] + 16 * INFO_SPACING[1]))
-        info = self.font.render(f'blue supply: {self.compet_info[1, 0]}\tbonus: {self.compet_info[1, 1]}\tbonus_time: {self.compet_info[1, 3]}', False, COLOR_BLACK)
+        info = self.font.render(f'blue supply: {self.compet_info[1, 0]}  bonus: {self.compet_info[1, 1]}  bonus_time: {self.compet_info[1, 3]}', False, COLOR_BLACK)
         self.screen.blit(info, (INFO_START[0], INFO_START[1] + 17 * INFO_SPACING[1]))
 
     def receive_commands(self):  # reviewed
@@ -344,12 +344,12 @@ class Kernel(object):
         for other_robot in self.robots:
             if robot.id_ == other_robot.id_:
                 continue
-            wheels = other_robot.transfer_to_car_coordinate(wheels)  # check wheel interference with other robots
-            if any(point_inside_rect(w, ROBOT, check_on=True) for w in wheels):
+            wheels_trans = other_robot.transfer_to_car_coordinate(wheels)  # check wheel interference with other robots
+            if any(point_inside_rect(w, ROBOT, check_on=True) for w in wheels_trans):
                 robot.status[14] += 1
                 return True
-            armors = other_robot.transfer_to_car_coordinate(armors)  # check armor interference with other robots
-            if any(point_inside_rect(a, ROBOT, check_on=True) for a in armors):
+            armors_trans = other_robot.transfer_to_car_coordinate(armors)  # check armor interference with other robots
+            if any(point_inside_rect(a, ROBOT, check_on=True) for a in armors_trans):
                 robot.status[14] += 1
                 robot.status[6] -= 10
                 return True
