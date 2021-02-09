@@ -2,6 +2,7 @@ import numpy as np
 from objects import *
 from globals import *
 from robot import Robot
+from zones import Zones
 import pygame
 import random
 
@@ -23,26 +24,9 @@ class Kernel(object):
             self.area_images = []
             self.area_rects = []
 
-            for area, image_file in zip((*ZONES, *SPAWNS, *LOW_BARRIERS, *HIGH_BARRIERS), (*ZONE_IMAGES, *SPAWN_IMAGES, *LOW_BARRIER_IMAGES, *HIGH_BARRIER_IMAGES)):
+            for area, image_file in zip((*SPAWNS, *LOW_BARRIERS, *HIGH_BARRIERS), STATIC_IMAGES):
                 self.area_images.append(pygame.image.load(f'elements/{image_file}.png').convert_alpha())
                 self.area_rects.append(area.to_rect())
-
-            self.area_images.append(pygame.image.load(f'elements/icon/no_move.png').convert_alpha())
-            self.area_rects.append(Box(20, 20, 300, 300).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
-            self.area_rects.append(Box(54, 48, 300, 300).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/icon/no_shoot.png').convert_alpha())
-            self.area_rects.append(Box(20, 20, 300, 250).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
-            self.area_rects.append(Box(54, 48, 300, 250).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/icon/ammo.png').convert_alpha())
-            self.area_rects.append(Box(20, 20, 300, 200).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
-            self.area_rects.append(Box(54, 48, 300, 200).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/icon/hp.png').convert_alpha())
-            self.area_rects.append(Box(20, 20, 300, 150).to_rect())
-            self.area_images.append(pygame.image.load(f'elements/zone/active.png').convert_alpha())
-            self.area_rects.append(Box(54, 48, 300, 150).to_rect())
 
             self.chassis_blue_img = pygame.image.load('elements/robot/blue.png')
             self.chassis_red_img = pygame.image.load('elements/robot/red.png')
@@ -64,11 +48,8 @@ class Kernel(object):
         self.n = 0
         self.dev = False
         self.memory = []
-        self.robots = [Robot(0, TEAM_BLUE, *SPAWNS[0].center),
-                       Robot(2, TEAM_BLUE, *SPAWNS[1].center),
-                       Robot(3, TEAM_RED, *SPAWNS[2].center),
-                       Robot(1, TEAM_RED, *SPAWNS[3].center)][:self.car_count]
-        self.randomize_zones()
+        self.robots = [Robot() for _ in range(self.car_count)]
+        self.zones = Zones()
         return State(self.time, self.robots, self.compet_info, self.time <= 0)
 
     def play(self):
@@ -93,14 +74,14 @@ class Kernel(object):
             self.move_robot(robot)
 
             if not self.epoch % 20:  # todo: apply new heat rules here
-                if robot.status[5] >= 720:
-                    robot.status[6] -= (robot.status[5] - 720) * 40
-                    robot.status[5] = 720
-                elif robot.status[5] > 360:
-                    robot.status[6] -= (robot.status[5] - 360) * 4
-                robot.status[5] -= 12 if robot.status[6] >= 400 else 24
-            robot.status[5] = np.max(robot.status[5], 0)
-            robot.status[6] = np.max(robot.status[6], 0)
+                if robot.heat >= 720:
+                    robot.hp -= (robot.heat - 720) * 40
+                    robot.heat = 720
+                elif robot.heat > 360:
+                    robot.hp -= (robot.heat - 360) * 4
+                robot.heat -= 12 if robot.hp >= 400 else 24
+            robot.heat = np.max(robot.heat, 0)
+            robot.hp = np.max(robot.hp, 0)
             if not robot.actions[5]:
                 robot.actions[4] = 0
 
@@ -119,7 +100,7 @@ class Kernel(object):
 
         # randomize zones every minute
         if self.epoch == ZONE_RESET * 200 or self.epoch == 2 * ZONE_RESET * 200:
-            self.randomize_zones()
+            self.zones.reset()
 
         self.epoch += 1
         if self.record:
@@ -134,40 +115,40 @@ class Kernel(object):
         #     return
 
         if robot.actions[0]:  # rotate chassis
-            old_angle = robot.status[3]
-            robot.status[3] += robot.actions[0]
-            robot.status[3] = normalize_angle(robot.status[3])
+            old_angle = robot.angle
+            robot.angle += robot.actions[0]
+            robot.angle = normalize_angle(robot.angle)
             if self.check_interference(robot):
                 robot.actions[0] = -robot.actions[0] * COLLISION_COEFFICENT
-                robot.status[3] = old_angle
+                robot.angle = old_angle
 
         if robot.actions[1]:  # rotate gimbal
-            robot.status[4] += robot.actions[1]
-            robot.status[4] = np.clip(robot.status[4], -90, 90)
+            robot.gimbal_yaw += robot.actions[1]
+            robot.gimbal_yaw = np.clip(robot.gimbal_yaw, -90, 90)
 
         if robot.actions[2] or robot.actions[3]:  # translate chassis
-            angle = np.deg2rad(robot.status[3])
-            old_x, old_y = robot.status[1], robot.status[2]
+            angle = np.deg2rad(robot.angle)
+            old_x, old_y = robot.center[0], robot.center[1]
 
-            robot.status[1] += robot.actions[2] * np.cos(angle) - robot.actions[3] * np.sin(angle)
+            robot.center[0] += robot.actions[2] * np.cos(angle) - robot.actions[3] * np.sin(angle)
             if self.check_interference(robot):
                 robot.actions[2] = -robot.actions[2] * COLLISION_COEFFICENT
-                robot.status[1] = old_x
-            robot.status[2] += robot.actions[2] * np.sin(angle) + robot.actions[3] * np.cos(angle)
+                robot.center[0] = old_x
+            robot.center[1] += robot.actions[2] * np.sin(angle) + robot.actions[3] * np.cos(angle)
             if self.check_interference(robot):
                 robot.actions[3] = -robot.actions[3] * COLLISION_COEFFICENT
-                robot.status[2] = old_y
+                robot.center[1] = old_y
 
-        if robot.actions[4] and robot.status[10]:  # handle firing
-            if robot.status[9]:
-                robot.status[10] -= 1
-                self.bullets.append(Bullet(robot.status[1:3], robot.status[4] + robot.status[3], robot.id_))
-                robot.status[5] += BULLET_SPEED
-                robot.status[9] = 0
+        if robot.actions[4] and robot.ammo:  # handle firing
+            if robot.can_shoot:
+                robot.ammo -= 1
+                self.bullets.append(Bullet(robot.center, robot.gimbal_yaw + robot.angle, robot.id_))
+                robot.heat += BULLET_SPEED
+                robot.can_shoot = 0
             else:
-                robot.status[9] = 1
+                robot.can_shoot = 1
         else:
-            robot.status[9] = 1
+            robot.can_shoot = 1
 
         # if robot.actions[7]:  AUTOAIM IMPLEMENTATION
         #     if self.car_count > 1:
@@ -175,8 +156,8 @@ class Kernel(object):
         #         if select.size:
         #             angles = np.zeros(select.size)
         #             for ii, i in enumerate(select):
-        #                 x, y = self.robots[i].status[1:3] - robot.status[1:3]
-        #                 angle = np.angle(x + y * 1j, deg=True) - self.robots[i].status[3]
+        #                 x, y = self.robots[i].center - robot.center
+        #                 angle = np.angle(x + y * 1j, deg=True) - self.robots[i].angle
         #                 if angle >= 180: angle -= 360
         #                 if angle <= -180: angle += 360
         #                 if -THETA <= angle < THETA:
@@ -187,34 +168,31 @@ class Kernel(object):
         #                     armor = self.robots[i].get_armor_center(1)
         #                 else:
         #                     armor = self.robots[i].get_armor_center(0)
-        #                 x, y = armor - robot.status[1:3]
-        #                 angle = np.angle(x + y * 1j, deg=True) - robot.status[4] - robot.status[3]
+        #                 x, y = armor - robot.center
+        #                 angle = np.angle(x + y * 1j, deg=True) - robot.yaw - robot.angle
         #                 if angle >= 180:
         #                     angle -= 360
         #                 if angle <= -180:
         #                     angle += 360
         #                 angles[ii] = angle
         #             m = np.where(np.abs(angles) == np.abs(angles).min())
-        #             robot.status[4] += angles[m][0]
-        #             robot.status[4] = np.clip(robot.status[4], -90, 90)
+        #             robot.yaw += angles[m][0]
+        #             robot.yaw = np.clip(robot.yaw, -90, 90)
 
         # check supply
         # if robot.actions[6]:
-        #     dis = np.abs(robot.status[1:3] - [self.areas[int(robot.team), 1][0:2].mean(), \
+        #     dis = np.abs(robot.center - [self.areas[int(robot.team), 1][0:2].mean(), \
         #                                       self.areas[int(robot.team), 1][2:4].mean()]).sum()
         #     if dis < 23 and self.compet_info[int(robot.team), 0] and not robot.status[7]:
         #         robot.status[8] = 1
         #         robot.status[7] = 600  # 3 s
-        #         robot.status[10] += 50
+        #         robot.ammo += 50
         #         self.compet_info[int(robot.team), 0] -= 1
 
         # Check whether the robot n is on top of any zones, and apply the corresponding (de)buff.
-        # It currently checks whether the robot is on its teams supply zone, the translucent gray rhombuses top
+        # It currently checks whether the robot is on its teams supply area, the translucent gray rhombuses top
         # and bottom middle of the field.
-        for zone in ZONES:
-            dist = np.abs(robot.status[1:3] - zone.center).sum()
-            if dist < 100:
-                robot.status[12] += 2
+        self.zones.check(self.robots)
 
     def move_bullet(self, bullet):  # reviewed
         old_center = bullet.center.copy()
@@ -229,16 +207,16 @@ class Kernel(object):
         for robot in self.robots:
             if robot.id_ == bullet.owner_id:
                 continue
-            if np.abs(robot.status[1:3] - bullet.center).sum() < 52.5:
+            if np.abs(robot.center - bullet.center).sum() < 52.5:
                 points = robot.transfer_to_car_coordinate(np.array([bullet.center, old_center]))
                 if any([lines_intersect(points[0], points[1], [-18.5, -5], [-18.5, 5]),
                         lines_intersect(points[0], points[1], [18.5, -5], [18.5, 5]),
                         lines_intersect(points[0], points[1], [-5, 30], [5, 30]),
                         lines_intersect(points[0], points[1], [-5, -30], [5, -30])]):
-                    if self.compet_info[int(robot.team), 3]:
-                        robot.status[6] -= 25
+                    if self.compet_info[robot.team.value, 3]:
+                        robot.hp -= 25
                     else:
-                        robot.status[6] -= 50
+                        robot.hp -= 50
                     return True
                 if ROBOT_BLOCK.intersects(points[0], points[1]):
                     return True
@@ -252,20 +230,21 @@ class Kernel(object):
         for i in range(len(self.bullets)):
             self.bullet_rect.center = self.bullets[i].center
             self.screen.blit(self.bullet_img, self.bullet_rect)
+        self.zones.draw(self.screen)
 
         for robot in self.robots:
-            chassis_img = self.chassis_red_img if (robot.team == TEAM_RED) else self.chassis_blue_img
-            chassis_rotate = pygame.transform.rotate(chassis_img, -robot.status[3])
-            gimbal_rotate = pygame.transform.rotate(self.gimbal_img, -robot.status[4] - robot.status[3])
+            chassis_img = self.chassis_red_img if (robot.team == TEAM.red) else self.chassis_blue_img
+            chassis_rotate = pygame.transform.rotate(chassis_img, -robot.angle)
+            gimbal_rotate = pygame.transform.rotate(self.gimbal_img, -robot.gimbal_yaw - robot.angle)
             chassis_rotate_rect = chassis_rotate.get_rect()
             gimbal_rotate_rect = gimbal_rotate.get_rect()
-            chassis_rotate_rect.center = robot.status[1:3]
-            gimbal_rotate_rect.center = robot.status[1:3]
+            chassis_rotate_rect.center = robot.center
+            gimbal_rotate_rect.center = robot.center
             self.screen.blit(chassis_rotate, chassis_rotate_rect)
             self.screen.blit(gimbal_rotate, gimbal_rotate_rect)
         for robot in self.robots:
-            info = self.font.render(f'{int(robot.status[6])}', False, COLOR_RED if (robot.team == TEAM_RED) else COLOR_BLUE)
-            self.screen.blit(info, robot.status[1:3] + [-15, -50])
+            info = self.font.render(f'{int(robot.hp)}', False, COLOR_RED if (robot.team == TEAM.red) else COLOR_BLUE)
+            self.screen.blit(info, robot.center + [-15, -50])
         info = self.font.render(f'time: {self.time}', False, COLOR_BLACK)
         self.screen.blit(info, (FIELD.dimensions[0] / 2 - 29, 3))
         if self.dev:
@@ -275,16 +254,14 @@ class Kernel(object):
     def dev_window(self):  # reviewed
         for robot in self.robots:
             for point in [*robot.get_wheel_points(), *robot.get_armor_points()]:
-                pygame.draw.circle(self.screen, robot.color, point.astype(int), 3)
+                pygame.draw.circle(self.screen, COLOR_BLUE if robot.team == TEAM.blue else COLOR_RED, point.astype(int), 3)
 
         self.screen.blit(self.info_bar_img, self.info_bar_rect)
         for n, robot in enumerate(self.robots):
-            info = self.font.render(f'robot {robot.id_}', False, robot.color)
+            info = self.font.render(f'robot {robot.id_}', False, COLOR_BLUE if robot.team == TEAM.blue else COLOR_RED)
             self.screen.blit(info, (INFO_START[0] + n * INFO_SPACING[0], INFO_START[1]), special_flags=2)
-            tags = ['team', 'x', 'y', 'angle', 'yaw', 'heat', 'hp', 'freeze_time', 'is_supply',
-                    'can_shoot', 'bullet', 'stay_time', 'wheel_hit', 'armor_hit', 'car_hit']
-            for i, data in enumerate(robot.status):
-                info = self.font.render(f'{tags[i]}: {int(data)}', False, COLOR_BLACK)
+            for i, (label, value) in enumerate(robot.status_dict().items()):
+                info = self.font.render(f'{label}: {value:.0f}', False, COLOR_BLACK)
                 self.screen.blit(info, (INFO_START[0] + n * INFO_SPACING[0], INFO_START[1] + (i + 1) * INFO_SPACING[1]))
 
         info = self.font.render(f'red supply: {self.compet_info[0, 0]}  bonus: {self.compet_info[0, 1]}  bonus_time: {self.compet_info[0, 3]}', False, COLOR_BLACK)
@@ -333,12 +310,12 @@ class Kernel(object):
         self.dev = pressed[pygame.K_TAB]
         return False
 
-    # def stay_check(self):  # todo: apply new zone rules here
+    # def stay_check(self):  # todo: apply new area rules here
     #     # check bonus stay
     #     for robot in self.robots:
     #         a = ZONES.keys()[int(robot.team), 0]
-    #         if robot.status[1] >= a[0] and robot.status[1] <= a[1] and robot.status[2] >= a[2] \
-    #                 and robot.status[2] <= a[3] and self.compet_info[int(robot.team), 1]:
+    #         if robot.center[0] >= a[0] and robot.center[0] <= a[1] and robot.center[1] >= a[2] \
+    #                 and robot.center[1] <= a[3] and self.compet_info[int(robot.team), 1]:
     #             robot.status[11] += 1  # 1/200 s
     #             if robot.status[11] >= 1000:  # 5s
     #                 robot.status[11] = 0
@@ -352,12 +329,12 @@ class Kernel(object):
     def check_interference(self, robot):  # reviewed
         wheels = robot.get_wheel_points()  # check wheel interference with walls/barriers
         if any(not FIELD.contains(w, strict=True) or any(b.contains(w) for b in (*LOW_BARRIERS, *HIGH_BARRIERS)) for w in wheels):
-            robot.status[12] += 1
+            robot.wheel_hit += 1
             return True
         armors = robot.get_armor_points()  # check armor interference with walls/barriers
         if any(not FIELD.contains(a, strict=True) or any(b.contains(a) for b in (*LOW_BARRIERS, *HIGH_BARRIERS)) for a in armors):
-            robot.status[13] += 1
-            robot.status[6] -= 10
+            robot.armor_hit += 1
+            robot.hp -= 10
             return True
 
         for other_robot in self.robots:
@@ -365,35 +342,17 @@ class Kernel(object):
                 continue
             wheels_trans = other_robot.transfer_to_car_coordinate(wheels)  # check wheel interference with other robots
             if any(ROBOT.contains(w) for w in wheels_trans):
-                robot.status[14] += 1
+                robot.robot_hit += 1
                 return True
             armors_trans = other_robot.transfer_to_car_coordinate(armors)  # check armor interference with other robots
             if any(ROBOT.contains(a) for a in armors_trans):
-                robot.status[14] += 1
-                robot.status[6] -= 10
+                robot.robot_hit += 1
+                robot.hp -= 10
                 return True
         return False
 
     def save_record(self, file):
         np.save(file, self.memory)
-
-    def randomize_zones(self):
-        self.zones = [''] * 6
-
-        buff = random.sample(ZONE_TYPES[:2], k=2)
-        buff_pos = random.sample([0, 1, 2], k=2)
-        debuff = random.sample(ZONE_TYPES[2:], k=2)
-        debuff_pos = 3 - np.sum(buff_pos)   # debuff goes where the buffs arent
-
-        for i in range(len(buff)):
-            self.zones[buff_pos[i]] = buff[i]
-            self.zones[3 + buff_pos[i]] = buff[i]
-
-        self.zones[debuff_pos] = debuff[0]
-        self.zones[3 + debuff_pos] = debuff[1]
-
-        print(f'self.zones={self.zones}')
-
 
 # important indexs
 # areas_index = [[{'border_x0': 0, 'border_x1': 1,'border_y0': 2,'border_y1': 3}, # 0 bonus red
