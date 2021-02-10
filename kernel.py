@@ -13,8 +13,6 @@ class Kernel(object):
         self.render = render
         self.record = record
         self.time, self.obs, self.compet_info, self.bullets, self.epoch, self.n, self.dev, self.memory, self.robots = None, None, None, None, None, None, None, None, None
-        self.zones = None
-        self.reset()
 
         if render:
             pygame.init()
@@ -28,16 +26,19 @@ class Kernel(object):
                 self.area_images.append(pygame.image.load(f'elements/{image_file}.png').convert_alpha())
                 self.area_rects.append(area.to_rect())
 
-            self.chassis_blue_img = pygame.image.load('elements/robot/blue.png')
-            self.chassis_red_img = pygame.image.load('elements/robot/red.png')
-            self.gimbal_img = pygame.image.load('elements/robot/gimbal.png')
-            self.bullet_img = pygame.image.load('elements/robot/bullet.png')
-            self.info_bar_img = pygame.image.load('elements/info_panel.png')
+            self.chassis_blue_img = pygame.image.load('elements/robot/blue.png').convert_alpha()
+            self.chassis_red_img = pygame.image.load('elements/robot/red.png').convert_alpha()
+            self.gimbal_img = pygame.image.load('elements/robot/gimbal.png').convert_alpha()
+            self.bullet_img = pygame.image.load('elements/robot/bullet.png').convert_alpha()
+            self.info_bar_img = pygame.image.load('elements/info_panel.png').convert_alpha()
             self.bullet_rect = self.bullet_img.get_rect()
             self.info_bar_rect = INFO_PANEL.to_rect()
             pygame.font.init()
             self.font = pygame.font.SysFont('mono', 12)
             self.clock = pygame.time.Clock()
+
+        self.zones = Zones(render=render)
+        self.reset()
 
     def reset(self):
         self.time = MATCH_DURATION
@@ -49,7 +50,7 @@ class Kernel(object):
         self.dev = False
         self.memory = []
         self.robots = [Robot() for _ in range(self.car_count)]
-        self.zones = Zones()
+        self.zones.reset()
         return State(self.time, self.robots, self.compet_info, self.time <= 0)
 
     def play(self):
@@ -68,6 +69,7 @@ class Kernel(object):
         return State(self.time, self.robots, self.compet_info, self.time <= 0)
 
     def one_epoch(self):  # reviewed
+        pygame.time.wait(3)
         for robot in self.robots:  # move robots
             if not self.epoch % 10:
                 robot.commands_to_actions()
@@ -192,7 +194,7 @@ class Kernel(object):
         # Check whether the robot n is on top of any zones, and apply the corresponding (de)buff.
         # It currently checks whether the robot is on its teams supply area, the translucent gray rhombuses top
         # and bottom middle of the field.
-        self.zones.check(self.robots)
+        self.zones.apply(self.robots)
 
     def move_bullet(self, bullet):  # reviewed
         old_center = bullet.center.copy()
@@ -254,7 +256,7 @@ class Kernel(object):
     def dev_window(self):  # reviewed
         for robot in self.robots:
             for point in [*robot.get_wheel_points(), *robot.get_armor_points()]:
-                pygame.draw.circle(self.screen, COLOR_BLUE if robot.team == TEAM.blue else COLOR_RED, point.astype(int), 3)
+                pygame.draw.circle(self.screen, COLOR_BLUE if robot.team == TEAM.blue else COLOR_RED, point.astype(int), 2)
 
         self.screen.blit(self.info_bar_img, self.info_bar_rect)
         for n, robot in enumerate(self.robots):
