@@ -1,17 +1,9 @@
-# -*- coding: utf-8 -*-
-from rmaics import rmaics
-from kernal import record_player
+from modules.rmaics import Rmaics
 
-#%%
-game = rmaics(agent_num=4, render=True)
-game.reset()
-# only when render = True
-game.play()
+if __name__ == '__main__':
+    game = Rmaics(agent_num=4, render=True)
+    game.play()
 
-#%%
-game.save_record('./records/record0.npy')
-
-#%%
-player = record_player()
-player.play('./records/record_test.npy')
-
+# game.save_record('./records/record0.npy')
+# player = record_player()
+# player.play('./records/record_test.npy')

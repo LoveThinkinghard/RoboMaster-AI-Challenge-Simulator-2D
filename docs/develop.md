@@ -38,7 +38,7 @@ what program is running, the CPU usage is about 20%. This is just to show the ac
 Test Code：
 
 ```python
-from rmaics import Rmaics
+from modules.rmaics import Rmaics
 import numpy as np
 import time
 

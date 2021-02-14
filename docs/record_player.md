@@ -5,8 +5,12 @@ The `RecordPlayer` class in `kernel.py` can be used to reproduce previous games
 ## Saving game memory
 
 ```python
-from rmaics import Rmaics
+from modules.rmaics import Rmaics
+<<<<<<< HEAD
+game = rmaics(agent_num=4, render=True)
+=======
 game = Rmaics(agent_num=4, render=True)
+>>>>>>> master
 game.reset()
 # only when render = True
 game.play()
@@ -20,8 +24,13 @@ right corner under `Windows`, the game can be ended normally, and the game memor
 ## Loading and replaying the memory
 
 ```python
-from kernel import RecordPlayer
+<<<<<<< HEAD
+from modules.kernel import record_player
+player = record_player()
+=======
+from modules.kernel import RecordPlayer
 player = RecordPlayer()
+>>>>>>> master
 player.play('./records/record0.npy')
 ```
 

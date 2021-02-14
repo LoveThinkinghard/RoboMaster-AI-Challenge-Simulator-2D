@@ -34,7 +34,7 @@ Import, declare and initialize. When `render` is `True`,
 the screen will be displayed, and keyboard operations can be used, but not vice versa
 
 ```python
-from rmaics import Rmaics
+from modules.rmaics import Rmaics
 car_num = 4
 game = rmaics(agent_num=car_num, render=True)
 game.reset()
