@@ -1,5 +1,4 @@
-from rmaics import Rmaics
-from record_player import record_player
+from modules.rmaics import Rmaics
 
 if __name__ == '__main__':
     game = Rmaics(agent_num=4, render=True)

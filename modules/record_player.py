@@ -12,7 +12,7 @@ class record_player(object):
         self.barriers_img = []
         self.barriers_rect = []
         for index, barrier in enumerate(HIGH_BARRIERS):
-            image_file = f"./elements/low_barrier_{'horizonal' if index < 4 else 'vertical'}.png"
+            image_file = f"./images/low_barrier_{'horizonal' if index < 4 else 'vertical'}.png"
             self.barriers_img.append(pygame.image.load(image_file))
             self.barriers_rect.append(self.barriers_img[-1].get_rect())
             self.barriers_rect[-1].center = find_rect_center(barrier)
@@ -29,10 +29,10 @@ class record_player(object):
         self.head_rect = [self.head_img[i].get_rect() for i in range(len(self.head_img))]
         self.head_rect[0].center = [self.areas[0, 1][0:2].mean(), self.areas[0, 1][2:4].mean()]
         self.head_rect[1].center = [self.areas[1, 1][0:2].mean(), self.areas[1, 1][2:4].mean()]
-        self.chassis_img = pygame.image.load('elements/chassis.png')
-        self.gimbal_img = pygame.image.load('elements/gimbal.png')
-        self.bullet_img = pygame.image.load('elements/bullet.png')
-        self.info_bar_img = pygame.image.load('elements/info_panel.png')
+        self.chassis_img = pygame.image.load('images/chassis.png')
+        self.gimbal_img = pygame.image.load('images/gimbal.png')
+        self.bullet_img = pygame.image.load('images/bullet.png')
+        self.info_bar_img = pygame.image.load('../images/stats_panel.png')
         self.bullet_rect = self.bullet_img.get_rect()
         self.info_bar_rect = self.info_bar_img.get_rect()
         self.info_bar_rect.center = [200, self.map_width/2]
