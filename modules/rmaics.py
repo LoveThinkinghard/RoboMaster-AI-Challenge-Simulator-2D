@@ -4,7 +4,6 @@ from modules.kernel import Kernel
 class Rmaics(object):
     def __init__(self, agent_num, render=True):
         self.game = Kernel(robot_count=agent_num, render=render)
-        # self.g_map = self.game.get_map()
         self.memory = []
 
     def reset(self):
