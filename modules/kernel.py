@@ -218,9 +218,6 @@ class Kernel(object):
         if pressed[pygame.K_m]: robot.commands[3] += 1
 
         robot.commands[4] = int(pressed[pygame.K_SPACE])
-        robot.commands[5] = int(pressed[pygame.K_f])
-        robot.commands[6] = int(pressed[pygame.K_r])
-        robot.commands[7] = int(pressed[pygame.K_n])
         self.stat = pressed[pygame.K_TAB]
         return False
 

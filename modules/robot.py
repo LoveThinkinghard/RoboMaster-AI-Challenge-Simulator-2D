@@ -40,8 +40,8 @@ class Robot:
         self.barrier_hits = 0
         self.bullet_hits = 0
         self.robot_hits = 0
-        self.commands = np.zeros(8, dtype=np.int8)  # x, y, rotate, yaw, shoot, supply, shoot_mode, auto_aim
-        self.actions = np.zeros(8, dtype=np.float32)  # rotate_speed, yaw_speed, x_speed, y_speed, shoot
+        self.commands = np.zeros(5, dtype=np.int8)  # x, y, rotate, yaw, shoot
+        self.actions = np.zeros(5, dtype=np.float32)  # rotate_speed, yaw_speed, x_speed, y_speed, shoot
 
         if self.is_blue:
             Robot.count_blue += 1
@@ -147,7 +147,7 @@ class Robot:
         if abs(self.actions[1]) < 1 / ROBOT.yaw_motion:
             self.actions[1] = 0
         self.actions[1] = np.clip(self.actions[1], -3, 3)
-        self.actions[4:] = self.commands[4:]
+        self.actions[4] = self.commands[4]
 
     def status_dict(self):
         return {
