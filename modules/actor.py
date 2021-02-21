@@ -63,7 +63,6 @@ class Actor:
     def get_path(self, target_pos):
         return self.nav.calculate_path(self.current_waypoint, self.nav.get_nearest_waypoint(target_pos))
 
-    
     def set_destination(self, dest):
         '''Update the robots (x,y) destination co-ordinates'''
         nav_path = self.get_path(dest)

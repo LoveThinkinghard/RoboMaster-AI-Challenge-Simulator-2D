@@ -46,7 +46,6 @@ class NavigationGraph:
                 min_dist = d
         return nearest_wp
 
-
     def is_valid_pos(self, pos: Tuple[int, int]):
         return random.uniform(0, 1) > 0.15
 
