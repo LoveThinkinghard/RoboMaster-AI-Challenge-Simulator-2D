@@ -2,6 +2,9 @@ import numpy as np
 import pickle
 
 # Indices of important robot properties in state.agents[car_num]
+from modules.robot import Robot
+from modules.waypoints.nav_graph import NavigationGraph
+
 OWNER = 0
 POS_X = 1
 POS_Y = 2
@@ -21,6 +24,8 @@ class Actor:
         self.prev_action = None
         self.next_waypoint = None
         self.destination = None
+        self.nav = NavigationGraph()
+        self.current_robot: Robot = Robot()
     
     def action_from_state(self, state, g_map):
         '''Given the current state of the arena, determine what this robot should do next
@@ -50,10 +55,18 @@ class Actor:
         
         self.prev_action = action
         return action
+
+    @property
+    def current_waypoint(self):
+        return self.nav.get_nearest_waypoint(self.current_robot.center)
+
+    def get_path(self, target_pos):
+        return self.nav.calculate_path(self.current_waypoint, self.nav.get_nearest_waypoint(target_pos))
+
     
     def set_destination(self, dest):
         '''Update the robots (x,y) destination co-ordinates'''
-        self.destination = dest
+        nav_path = self.get_path(dest)
     
     def navigate(self):
         '''Pathfind to the destination. Returns the x,y,rotation values'''

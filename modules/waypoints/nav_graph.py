@@ -3,8 +3,13 @@ from pathlib import Path
 from typing import Tuple, Optional, List
 
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
 import json
+
+
+def euclidean_distance(p1, p2):
+    return np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
 
 
 class NavigationGraph:
@@ -30,6 +35,17 @@ class NavigationGraph:
     def get_pos(self, node_id):
         node = self.nx_graph.nodes[node_id]
         return node["x"], node["y"]
+
+    def get_nearest_waypoint(self, pos: Tuple[int, int]):
+        nearest_wp = 0
+        min_dist = euclidean_distance(pos, self.get_pos(0))
+        for idx, waypoint_pos in enumerate([self.get_pos(x) for x in range(len(self.nx_graph.nodes()))][1:]):
+            d = euclidean_distance(pos, waypoint_pos)
+            if d < min_dist:
+                nearest_wp = idx
+                min_dist = d
+        return nearest_wp
+
 
     def is_valid_pos(self, pos: Tuple[int, int]):
         return random.uniform(0, 1) > 0.15
