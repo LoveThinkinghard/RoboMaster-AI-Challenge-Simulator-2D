@@ -41,6 +41,6 @@ numpy
 
 ### 3、其他
 
-`kernal`为`kernel`的错误写法，有时间改过来
+`kernal`本意想表达`kernel`，意思是核心，但不小心写错了
 
 
